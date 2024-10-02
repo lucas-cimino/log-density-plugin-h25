@@ -31,6 +31,7 @@ Understanding and managing log density is crucial for maintaining the performanc
 - If a model exists, navigate through your Java files to see real-time log density annotations.
 - For batch analysis, use the **Java Files and Analyze Files** views. Select the files, then press `Analyze` to begin. Analysis might take approximately 1 minute per 50-75 medium-length files (about 300 lines each).
 - Color-coded results indicate log density discrepancies: red for significant differences, yellow for moderate, and green for minimal or no differences.
+- You can use apache zookeeper for testing purposes : [https://github.com/apache/zookeeper](https://github.com/apache/zookeeper)
 
 ## Known Issues
 

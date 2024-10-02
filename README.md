@@ -38,6 +38,12 @@ The Log Density Analyzer is a Visual Studio Code extension that leverages an AI 
 After setting up both the backend and frontend, activate the VS Code extension within the Visual 
 Studio Code editor to start analyzing your Java projects.
 
+Start by using the `Run Extension` script in **Run & Debung** (Crtl+Shift+D) in the left navigation bar in the Visual Studio.
+
+(`Ctrl+Shift+P` or `Cmd+Shift+P` on macOS), type `Send Github URL`, and enter a GitHub URL to start model training.
+
+- You can use apache zookeeper for testing purposes : [https://github.com/apache/zookeeper](https://github.com/apache/zookeeper)
+
 ## Testing
 To run the unit and integration tests:
 1. Change directory to services/service_ai_analysis or services/service_model_creation.

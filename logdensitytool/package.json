@@ -10,7 +10,10 @@
   "categories": [
     "Other"
   ],
-  "activationEvents": [""],
+  "activationEvents": [
+    "onLanguage:javascript",
+    "onLanguage:typescript",
+    "onCommand:log-advice-generator.generateLogAdvice"],
   "main": "./src/extension.js",
   "contributes": {
     "commands": [
@@ -61,6 +64,26 @@
           "light": "media/icons/refresh.svg",
           "dark": "media/icons/refresh-light.svg"
         }
+      },
+      {
+        "command": "log-advice-generator.generateLogAdvice",
+        "title": "Generate Log Advice",
+        "category": "Log Advice Generator"
+      },
+      {
+        "command": "log-advice-generator.changeModelId",
+        "title": "Change Model ID",
+        "category": "Log Advice Generator"
+      },
+      {
+        "command": "log-advice-generator.changeToken",
+        "title": "Change Token",
+        "category": "Log Advice Generator"
+      },
+      {
+        "command": "log-advice-generator.modelInfo",
+        "title": "Get Model Info",
+        "category": "Log Advice Generator"
       }
     ],
     "menus": {
@@ -68,6 +91,11 @@
         {
           "when": "resourceLangId == java",
           "command": "extension.analyzeLogDensity",
+          "group": "navigation"
+        },
+        {
+          "command": "log-advice-generator.generateLogAdvice",
+          "when": "editorHasSelection",
           "group": "navigation"
         }
       ],

@@ -9,8 +9,10 @@ open_source_java_projects/**
 
 **/__pycache__
 /logdensitytool/node_modules/
+**/node_modules
 /services/training_data/*
 !.gitkeep
 
 # Ignore .idea
 .idea/
+.venv

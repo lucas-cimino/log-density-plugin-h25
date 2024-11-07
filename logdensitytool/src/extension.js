@@ -184,24 +184,35 @@ function activate(context) {
     let generateLog = vscode.commands.registerCommand('log-advice-generator.generateLogAdvice', generateLogAdvice);
 
     let changeModel = vscode.commands.registerCommand('log-advice-generator.changeModelId', async () => {
-        const response = await callGenerationBackendGet('/model_info', null)
-        const MODEL_ID = response.data.model_name
+        const response = await callGenerationBackendGet('/model_info', null);
+        const MODEL_ID = response.data.model_name;
         const model = await vscode.window.showInputBox({ prompt: 'Enter a HuggingFace Model ID', value: MODEL_ID });
+        
         if (model) {
-            console.log(`Changing Model to : ${model}`)
-            const response = await callGenerationBackendPost('/change_model', {hf_model_id: model})
-			console.log(JSON.stringify(response.data, null, 2))
-            if (response.data.completed == true) {
-                vscode.window.showInformationMessage('Model Change has been successfull, Model configured : ' + response.data.model_name)
-            } else {
-				vscode.window.showErrorMessage('Model Change Failed, Model configured : ' + response.data.model_name);
-			}
+            await vscode.window.withProgress({
+                location: vscode.ProgressLocation.Notification,
+                title: `Changing Model to: ${model}`,
+                cancellable: false
+            }, async (progress) => {
+                progress.report({message: "Initializing model change..." });
+                
+                try {
+                    const response = await callGenerationBackendPost('/change_model', { hf_model_id: model });
+                    
+                    if (response.data.completed === true) {
+                        vscode.window.showInformationMessage('Model Change has been successful, Model configured: ' + response.data.model_name);
+                    } else {
+                        vscode.window.showErrorMessage('Model Change Failed, Model configured: ' + response.data.model_name);
+                    }
+                } catch (error) {
+                    vscode.window.showErrorMessage('An error occurred during the model change process.');
+                }
+            });
         } else {
             vscode.window.showErrorMessage('MODEL ID is required');
         }
-
-
     });
+    
 
     let changeToken = vscode.commands.registerCommand('log-advice-generator.changeToken', async () => {
         const token = await vscode.window.showInputBox({ prompt: 'Enter a HuggingFace Model ID'});

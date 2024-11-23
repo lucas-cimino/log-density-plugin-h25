@@ -6,11 +6,15 @@ const { registerOpenTabsSideBarProvider, OpenTabsSidebarProvider } = require('./
 const trainModelService = require('./services/trainModelService');
 const runModelService = require('./services/runModelService');
 const { registerJavaFileProvider, JavaFileProvider } = require('./providers/javaFileProvider');  
-const { registerAnalyzeFileProvider} = require('./providers/analyzeFileProvider')
+const { registerAnalyzeFileProvider} = require('./providers/analyzeFileProvider');
+const createApiModelService = require('./services/ApiModelFactory');
+const config = require('./config.json');
+const { api, url, port, system_prompt, default_model, default_token } = config;
 
 let trained = false;
 let remoteUrl; // Store the remote URL if needed
 const codeLensProvider = new LogDensityCodeLensProvider();
+const apiModelService = createApiModelService(api, url, port, system_prompt, default_model, default_token)
 
 async function analyzeDocument(document) {
     if (document?.languageId !== "java") {
@@ -18,30 +22,6 @@ async function analyzeDocument(document) {
     }
     const { blocks } = await runModelService.runModel(remoteUrl, document.getText());
     codeLensProvider.setData(blocks);  // Update CodeLens with new data
-}
-
-async function callGenerationBackendPost(path, args) {
-	const URL = 'http://localhost:8888'
-	return await axios.post(URL + path, args, {
-		headers: {
-			'Content-Type': 'application/json',
-		}
-	});
-}
-
-async function callGenerationBackendGet(path, params) {
-    /**
-     * path : string of path ex: "/help"
-     * params : map of params ex: {param1: "testing1", param2: 2}
-     */
-	const URL = 'http://localhost:8888'
-	let parameters = ""
-	if (params != null && typeof params === 'object') {
-        parameters = '?' + Object.entries(params)
-            .map(([key, value]) => `${encodeURIComponent(key)}=${encodeURIComponent(value)}`)
-            .join('&');
-    }
-	return await axios.get(URL + path + parameters);
 }
 
 async function generateLogAdvice() {
@@ -58,8 +38,9 @@ async function generateLogAdvice() {
     }
 
     const prompt = (
-        "Context: You are an AI assistant that helps people with their questions. "
-        + "Please only add 2 to 5 lines of code to improve log messages to the following code: "
+    // Promt modifiable dans le backend dans un fichier config
+        "Context: Suggest 1 log (System.out.println()) to add to method the following JAVA functions, don't return the input, only the output: \n"
+        //+ "Please only add 2 to 5 lines of code to improve log messages to the following code: "
         + selectedText
     );
 
@@ -75,13 +56,13 @@ async function generateLogAdvice() {
             console.log("Calling the LLM model to get code suggestion with the selected text: ", selectedText);
             
 			// Call your LLM service
-			const response = await callGenerationBackendPost('/predict', {prompt: prompt, max_new_tokens: 100, temperature: 0.1}) 
-            
+            const model = await apiModelService.getModel();
+			const modelResponse = await apiModelService.generate(model, null, prompt, null, null)
 
             console.log("Response from LLM model: ");
-			console.log(JSON.stringify(response.data, null, 2))
-            const suggestedCode = response.data.content;
-
+			console.log(JSON.stringify(modelResponse, null, 2))
+            let suggestedCode = modelResponse;
+            //suggestedCode = sanitizeLLMOutputForJava(suggestedCode)
             // Create a text edit with the generated code
             const edit = new vscode.WorkspaceEdit();
             const range = new vscode.Range(editor.selection.start, editor.selection.end);
@@ -184,10 +165,8 @@ function activate(context) {
     let generateLog = vscode.commands.registerCommand('log-advice-generator.generateLogAdvice', generateLogAdvice);
 
     let changeModel = vscode.commands.registerCommand('log-advice-generator.changeModelId', async () => {
-        const response = await callGenerationBackendGet('/model_info', null);
-        const MODEL_ID = response.data.model_name;
-        const model = await vscode.window.showInputBox({ prompt: 'Enter a HuggingFace Model ID', value: MODEL_ID });
-        
+        const MODEL_ID = await apiModelService.getModel();
+        const model = await vscode.window.showInputBox({ prompt: `Enter ${api} Model ID`, value: MODEL_ID });
         if (model) {
             await vscode.window.withProgress({
                 location: vscode.ProgressLocation.Notification,
@@ -197,12 +176,12 @@ function activate(context) {
                 progress.report({message: "Initializing model change..." });
                 
                 try {
-                    const response = await callGenerationBackendPost('/change_model', { hf_model_id: model });
+                    const response = await apiModelService.changeModel(model)
                     
-                    if (response.data.completed === true) {
-                        vscode.window.showInformationMessage('Model Change has been successful, Model configured: ' + response.data.model_name);
+                    if (response.completed === true) {
+                        vscode.window.showInformationMessage('Model Change has been successful, Model configured: ' + response.model);
                     } else {
-                        vscode.window.showErrorMessage('Model Change Failed, Model configured: ' + response.data.model_name);
+                        vscode.window.showErrorMessage('Model Change Failed, Model configured: ' + response.model);
                     }
                 } catch (error) {
                     vscode.window.showErrorMessage('An error occurred during the model change process.');
@@ -215,15 +194,15 @@ function activate(context) {
     
 
     let changeToken = vscode.commands.registerCommand('log-advice-generator.changeToken', async () => {
-        const token = await vscode.window.showInputBox({ prompt: 'Enter a HuggingFace Model ID'});
+        const token = await vscode.window.showInputBox({ prompt: `Enter ${api} Token` });
         if (token) {
             console.log(`Changing token`)
-            const response = await callGenerationBackendPost('/change_token', {hf_token: token})
-			console.log(JSON.stringify(response.data, null, 2))
-            if (response.data.completed == true) {
+            const response = await apiModelService.changeToken(token)
+			console.log(JSON.stringify(response, null, 2))
+            if (response.completed == true) {
                 vscode.window.showInformationMessage('Token Change has been successfull')
             } else {
-				vscode.window.showErrorMessage('Token Change Failed');
+				vscode.window.showErrorMessage(response.message);
 			}
         } else {
             vscode.window.showErrorMessage('TOKEN is required');
@@ -231,12 +210,9 @@ function activate(context) {
     });
 
     let getModelInfo = vscode.commands.registerCommand('log-advice-generator.modelInfo', async () => {
-		const response = await callGenerationBackendGet('/model_info', null)
-		console.log(JSON.stringify(response.data, null, 2))
-        vscode.window.showInformationMessage('The model configured is [' + response.data.model_name + ']')
-		vscode.window.showInformationMessage('Running on [' + response.data.device + ']')
-
-
+		const response = await apiModelService.info()
+		console.log(JSON.stringify(response, null, 2))
+        vscode.window.showInformationMessage("Model : " + response.model)
     });
 
     context.subscriptions.push(

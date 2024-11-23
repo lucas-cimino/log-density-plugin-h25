@@ -46,6 +46,27 @@ docker-compose -f ./services/docker-compose.yml up --build
 4. (`Ctrl+Shift+P` or `Cmd+Shift+P` on macOS) or `F1`, type `Send Github URL`, and enter a GitHub URL to start model training.
    - You can use apache zookeeper for testing purposes : [https://github.com/apache/zookeeper](https://github.com/apache/zookeeper)
 
+## Ollama - backend
+
+### Option 1 - Install Ollama app
+
+- Download here : [Ollama](https://ollama.com/)
+- Start backend API with this command in terminal `ollama serve`
+
+### Option 2 - launch Ollama in Docker
+
+- Instruction here : [Docker Hub : Ollama](https://hub.docker.com/r/ollama/ollama)
+
+#### Some usefull commands
+
+- `ollama pull <model:size>`, exemple : `ollama pull llama3.2:3b`
+- Run model in terminal : `ollama run <model:size>`
+
+#### More information
+
+- API Doc : [Github: Ollama API Doc](https://github.com/ollama/ollama/blob/main/docs/api.md)
+- Models available : [Ollama Model Search](https://ollama.com/search)
+
 ## Testing
 
 To run the unit and integration tests:
@@ -66,6 +87,6 @@ To run the unit and integration tests:
    pytest services/service_model_creation
    ```
 
-
 ## Contributing
+
 Contributions are welcome! Please read our contributing (CONTRIBUTING.md) guidelines for details on our code of conduct and the process for submitting pull requests.

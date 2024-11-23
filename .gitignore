@@ -3,6 +3,7 @@
 
 # Ignore Gradle build output directory
 build
+bin
 
 # Ignore anything in open_source_java_projects
 open_source_java_projects/**

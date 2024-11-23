@@ -1,0 +1,8 @@
+{
+    "api":"ollama",
+    "url":"http://localhost",
+    "port":"11434",
+    "system_prompt":"Your an AI assistent for developper using JAVA. Context: Suggest 1 log <System.out.println()> to add to method the following JAVA functions, don't return the input, only the output: \n",
+    "default_model":"llama3.2:3b",
+    "default_token":""
+}

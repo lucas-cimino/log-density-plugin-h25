@@ -31,9 +31,15 @@ async function generateLogAdvice() {
         return;
     }
 
+
     const document = editor.document;
     const selection = editor.selection;
     const cursorLine = selection.active.line; // Ligne actuelle du curseur
+
+    if (!selection.isEmpty) {
+        // L'utilisateur a sélectionné du texte (méthode)
+        selectedText = document.getText(selection);
+    } 
 
     // Fonction pour extraire la méthode autour d'une ligne spécifique
     function getSurroundingMethodText(lineNumber) {
@@ -55,7 +61,7 @@ async function generateLogAdvice() {
         return document.getText(methodRange);
     }
 
-    const surroundingMethod = getSurroundingMethodText(cursorLine);
+    selectedText = getSurroundingMethodText(cursorLine);
 
     // Générer un prompt spécifique pour le modèle
     const prompt = (
@@ -72,12 +78,6 @@ async function generateLogAdvice() {
         cancellable: false
     }, async (progress) => {
         progress.report({ message: "Contacting LLM..." });
-
-        const userResponse = await vscode.window.showInformationMessage(
-            "Log advice generated. Do you want to apply the changes?",
-            "Yes",
-            "No"
-        );
 
         try {
             console.log("Calling the LLM model to get code suggestion with the selected text: ", selectedText);
@@ -98,29 +98,30 @@ async function generateLogAdvice() {
             // Apply the edit as a preview
             await vscode.workspace.applyEdit(edit);
 
-                const suggestedLog = response.data.content.trim();
-                console.log("Generated log suggestion:", suggestedLog);
+            // Prompt the user to accept or decline the changes
+            const userResponse = await vscode.window.showInformationMessage(
+                "Log advice generated. Do you want to apply the changes?",
+                "Yes",
+                "No"
+            );
 
-                // Insérer la ligne de log à la position donnée
-                if(userResponse === "Yes") {
-                    await editor.edit(editBuilder => {
-                        const position = new vscode.Position(cursorLine + 1, 0);
-                        editBuilder.insert(position, `\n${suggestedLog}\n`);
-                    });
-                } else {
-                    // Revert the changes
-                    vscode.commands.executeCommand('undo');
-                    vscode.window.showInformationMessage("Log advice discarded.");
-                }
-                vscode.window.showInformationMessage("Log advice successfully generated and inserted.");
-            } catch (error) {
-                console.error(error);
-                vscode.window.showErrorMessage("Failed to generate log advice.");
+            if (userResponse === "Yes") {
+                // Apply the changes permanently
+                await editor.edit(editBuilder => {
+                    editBuilder.replace(editor.selection, suggestedCode);
+                });
+                vscode.window.showInformationMessage("Log advice applied.");
+            } else {
+                // Revert the changes
+                vscode.commands.executeCommand('undo');
+                vscode.window.showInformationMessage("Log advice discarded.");
             }
+        } catch (error) {
+            console.error(error);
+            vscode.window.showErrorMessage("Failed to get code suggestion.");
         }
-    );
+    });
 }
-
 
 function activate(context) {
     const workspaceRoot = vscode.workspace.rootPath;

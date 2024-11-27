@@ -95,7 +95,6 @@
         },
         {
           "command": "log-advice-generator.generateLogAdvice",
-          "when": "editorHasSelection",
           "group": "navigation"
         }
       ],

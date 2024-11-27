@@ -31,12 +31,33 @@ async function generateLogAdvice() {
         return;
     }
 
-    const selectedText = editor.document.getText(editor.selection);
-    if (!selectedText) {
-        vscode.window.showInformationMessage("Please select some code.");
-        return;
+    const document = editor.document;
+    const selection = editor.selection;
+    const cursorLine = selection.active.line; // Ligne actuelle du curseur
+
+    // Fonction pour extraire la méthode autour d'une ligne spécifique
+    function getSurroundingMethodText(lineNumber) {
+        let startLine = lineNumber;
+        let endLine = lineNumber;
+
+        // Chercher le début de la méthode
+        while (startLine > 0 && !document.lineAt(startLine).text.trim().endsWith("{")) {
+            startLine--;
+        }
+
+        // Chercher la fin de la méthode
+        while (endLine < document.lineCount - 1 && !document.lineAt(endLine).text.trim().endsWith("}")) {
+            endLine++;
+        }
+
+        // Récupérer le texte de la méthode complète
+        const methodRange = new vscode.Range(startLine, 0, endLine, document.lineAt(endLine).text.length);
+        return document.getText(methodRange);
     }
 
+    const surroundingMethod = getSurroundingMethodText(cursorLine);
+
+    // Générer un prompt spécifique pour le modèle
     const prompt = (
     // Promt modifiable dans le backend dans un fichier config
         "Context: Suggest 1 log (System.out.println()) to add to method the following JAVA functions, don't return the input, only the output: \n"
@@ -51,6 +72,12 @@ async function generateLogAdvice() {
         cancellable: false
     }, async (progress) => {
         progress.report({ message: "Contacting LLM..." });
+
+        const userResponse = await vscode.window.showInformationMessage(
+            "Log advice generated. Do you want to apply the changes?",
+            "Yes",
+            "No"
+        );
 
         try {
             console.log("Calling the LLM model to get code suggestion with the selected text: ", selectedText);
@@ -71,30 +98,29 @@ async function generateLogAdvice() {
             // Apply the edit as a preview
             await vscode.workspace.applyEdit(edit);
 
-            // Prompt the user to accept or decline the changes
-            const userResponse = await vscode.window.showInformationMessage(
-                "Log advice generated. Do you want to apply the changes?",
-                "Yes",
-                "No"
-            );
+                const suggestedLog = response.data.content.trim();
+                console.log("Generated log suggestion:", suggestedLog);
 
-            if (userResponse === "Yes") {
-                // Apply the changes permanently
-                await editor.edit(editBuilder => {
-                    editBuilder.replace(editor.selection, suggestedCode);
-                });
-                vscode.window.showInformationMessage("Log advice applied.");
-            } else {
-                // Revert the changes
-                vscode.commands.executeCommand('undo');
-                vscode.window.showInformationMessage("Log advice discarded.");
+                // Insérer la ligne de log à la position donnée
+                if(userResponse === "Yes") {
+                    await editor.edit(editBuilder => {
+                        const position = new vscode.Position(cursorLine + 1, 0);
+                        editBuilder.insert(position, `\n${suggestedLog}\n`);
+                    });
+                } else {
+                    // Revert the changes
+                    vscode.commands.executeCommand('undo');
+                    vscode.window.showInformationMessage("Log advice discarded.");
+                }
+                vscode.window.showInformationMessage("Log advice successfully generated and inserted.");
+            } catch (error) {
+                console.error(error);
+                vscode.window.showErrorMessage("Failed to generate log advice.");
             }
-        } catch (error) {
-            console.error(error);
-            vscode.window.showErrorMessage("Failed to get code suggestion.");
         }
-    });
+    );
 }
+
 
 function activate(context) {
     const workspaceRoot = vscode.workspace.rootPath;

@@ -19,24 +19,17 @@ The Log Density Analyzer is a Visual Studio Code extension that leverages an AI 
 
 ## Setting Up the Log Density Backend
 
-### **Option 1**
-
 1. Open terminal in project root
 2. Run this command :
 
-```bash
-docker-compose -f ./services/docker-compose.yml up --build
-```
-
-### **Option 2**
-
-1. Clone the repository and navigate to the `services` directory.
-2. Make sure that services/service_model_creation/install_R.sh and services/preprocess_project/gradlew are saved in LF format and not CRLF (as git might have converted them to, you can do the conversion by visiting the file and clicking CRLF at the bottom right of the VSCode window on the status bar)
-3. Run the following command to build and start the backend services using Docker:
-
    ```bash
-   docker compose up --build
+   docker-compose -f ./services/docker-compose.yml up --build
    ```
+
+3. Des services vont démarrés
+   - services-training
+   - services-model_runner
+   - ollama
 
 ## Setting Up the Frontend
 
@@ -46,20 +39,22 @@ docker-compose -f ./services/docker-compose.yml up --build
 4. (`Ctrl+Shift+P` or `Cmd+Shift+P` on macOS) or `F1`, type `Send Github URL`, and enter a GitHub URL to start model training.
    - You can use apache zookeeper for testing purposes : [https://github.com/apache/zookeeper](https://github.com/apache/zookeeper)
 
-## Ollama - backend
+## Ollama
 
-### Option 1 - Install Ollama app
+By default, ollama is bundled with the backend. There are some requirements to run on GPU, you can follow the instruction in `Option 2` you can also download the app to run the backend.
+
+### App - Ollama
 
 - Download here : [Ollama](https://ollama.com/)
 - Start backend API with this command in terminal `ollama serve`
 
-### Option 2 - launch Ollama in Docker
+### Docker - Ollama
 
 - Instruction here : [Docker Hub : Ollama](https://hub.docker.com/r/ollama/ollama)
 
 #### Some usefull commands
 
-- `ollama pull <model:size>`, exemple : `ollama pull llama3.2:3b`
+- Download model : `ollama pull <model:size>`
 - Run model in terminal : `ollama run <model:size>`
 
 #### More information

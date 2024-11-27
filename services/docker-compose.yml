@@ -17,7 +17,25 @@ services:
     volumes:
       - "training_data:/dossier_host"
 
+  ollama:
+    image: ollama/ollama
+    container_name: ollama
+    runtime: nvidia
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              capabilities: [gpu]
+    volumes:
+      - "ollama:/root/.ollama"
+    ports:
+      - "11434:11434"
+    command: ["serve"]
+
 volumes:
+  ollama:  # Properly define the named volume here
+    driver: local
   training_data:
     driver: local
     driver_opts:

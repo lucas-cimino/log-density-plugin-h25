@@ -8,6 +8,7 @@ const runModelService = require('./services/runModelService');
 const { registerJavaFileProvider, JavaFileProvider } = require('./providers/javaFileProvider');  
 const { registerAnalyzeFileProvider} = require('./providers/analyzeFileProvider');
 const createApiModelService = require('./services/ApiModelFactory');
+const { extractLog } = require('./utils/regex');
 const config = require('./config.json');
 const { api, url, port, system_prompt, default_model, default_token } = config;
 
@@ -85,15 +86,16 @@ async function generateLogAdvice() {
 			// Call your LLM service
             const model = await apiModelService.getModel();
 			const modelResponse = await apiModelService.generate(model, null, prompt, null, null)
-
+            
             console.log("Response from LLM model: ");
-			console.log(JSON.stringify(modelResponse, null, 2))
+            console.log(modelResponse)
             let suggestedCode = modelResponse;
-            //suggestedCode = sanitizeLLMOutputForJava(suggestedCode)
+
             // Create a text edit with the generated code
             const edit = new vscode.WorkspaceEdit();
             const range = new vscode.Range(editor.selection.start, editor.selection.end);
-            edit.replace(editor.document.uri, range, suggestedCode);
+            const tabulation = editor.selection.end.e
+            edit.replace(editor.document.uri, range, extractLog(suggestedCode, tabulation));
 
             // Apply the edit as a preview
             await vscode.workspace.applyEdit(edit);
@@ -107,9 +109,6 @@ async function generateLogAdvice() {
 
             if (userResponse === "Yes") {
                 // Apply the changes permanently
-                await editor.edit(editBuilder => {
-                    editBuilder.replace(editor.selection, suggestedCode);
-                });
                 vscode.window.showInformationMessage("Log advice applied.");
             } else {
                 // Revert the changes
@@ -224,8 +223,8 @@ function activate(context) {
         const token = await vscode.window.showInputBox({ prompt: `Enter ${api} Token` });
         if (token) {
             console.log(`Changing token`)
-            const response = await apiModelService.changeToken(token)
-			console.log(JSON.stringify(response, null, 2))
+            const response = await apiModelService.changeToken(token);
+			console.log(JSON.stringify(response, null, 2));
             if (response.completed == true) {
                 vscode.window.showInformationMessage('Token Change has been successfull')
             } else {
@@ -237,9 +236,9 @@ function activate(context) {
     });
 
     let getModelInfo = vscode.commands.registerCommand('log-advice-generator.modelInfo', async () => {
-		const response = await apiModelService.info()
-		console.log(JSON.stringify(response, null, 2))
-        vscode.window.showInformationMessage("Model : " + response.model)
+		const response = await apiModelService.info();
+        console.log(JSON.stringify(response.model, null))
+        vscode.window.showInformationMessage("Model : " + JSON.stringify(response.model, null))
     });
 
     context.subscriptions.push(

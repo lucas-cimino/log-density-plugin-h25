@@ -6,8 +6,6 @@ const OllamaApiModelService = require("./OllamaApiModelService");
  * @returns {HfApiModelService | OllamaApiModelService} The selected API service instance.
  */
 function createApiModelService(api, url, port, system_prompt, default_model, default_token) {
-  // Extract values from config
-  console.log(api, url, port, system_prompt, default_model, default_token)
 
   switch (api.toLowerCase()) {
     case "ollama":

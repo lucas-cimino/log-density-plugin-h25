@@ -23,11 +23,11 @@ class ApiModelService {
   }
 
   async info() {
-    throw new Error("Method 'modelInfo()' must be implemented.");
+    throw new Error("Method 'info()' must be implemented.");
   }
 
   async getModel() {
-    throw new Error("Method 'modelInfo()' must be implemented.");
+    throw new Error("Method 'getModel()' must be implemented.");
   }
 
   async changeToken(token) {

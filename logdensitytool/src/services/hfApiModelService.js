@@ -46,8 +46,8 @@ class HfApiModelService extends ApiModelService{
   }
   
   /**
-   * Retrieves information about the current model or API.
-   * @returns {model: string} Model configured
+   * Retrieves information about the models loaded.
+   * @returns {model: string|list} list of models or string
    */
   async info() {
     const response = await Get(this.url, this.port, '/model_info', null)

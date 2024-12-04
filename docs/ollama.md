@@ -7,13 +7,13 @@ Otherwise, you can use the [App](#app)
 
 ## App
 
-- Download here : [https://ollama.com/](https://ollama.com/){:target="_blank"}
+- Download here : <a href="https://ollama.com/" target="_blank">https://ollama.com/</a>
 - Once the application is started, you can use the terminal to use and run commands with ollama.
 - Start backend API with this command in terminal `ollama serve`
 
 ## Docker
 
-- Instruction here : [Docker Hub : Ollama](https://hub.docker.com/r/ollama/ollama){:target="_blank"}
+- Instruction here : <a href="https://hub.docker.com/r/ollama/ollama" target="_blank">Docker Hub : Ollama</a>
 - For Windows, you need to :
     1. Enable WSL2
     2. Install Ubuntu
@@ -29,12 +29,12 @@ Ollama Docker should use the your GPU if compatible
 - Download model : `ollama pull <model:size>`
 - Run model in terminal : `ollama run <model:size>`
 
-For more commands here is Ollama's quickstart guiide : [Github - Ollama Quickstart](https://github.com/ollama/ollama/blob/main/README.md#quickstart){:target="_blank"}
+For more commands here is Ollama's quickstart guiide : <a href="https://github.com/ollama/ollama/blob/main/README.md#quickstart" target="_blank">Github - Ollama Quickstart</a>
 
 ## API Documentation
 
-[Github: Ollama API Doc](https://github.com/ollama/ollama/blob/main/docs/api.md){:target="_blank"}
+<a href="https://github.com/ollama/ollama/blob/main/docs/api.md" target="_blank">Github: Ollama API Doc</a>
 
 ## Model Search
 
-[Ollama Model Search](https://ollama.com/search){:target="_blank"}
+<a href="https://ollama.com/search" target="_blank">Ollama Model Search</a>

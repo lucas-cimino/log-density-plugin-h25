@@ -1,6 +1,6 @@
 const Response = require("./response")
 
-class RegexResponse  extends Response {
+class RegexJavaResponse extends Response {
 
     static responseId = "regex"
   
@@ -57,4 +57,4 @@ class RegexResponse  extends Response {
     }
 }
 
-module.exports = RegexResponse;
+module.exports = RegexJavaResponse;

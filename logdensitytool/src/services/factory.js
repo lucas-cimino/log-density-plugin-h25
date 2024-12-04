@@ -30,7 +30,7 @@ function createResponse(responseId) {
     case StandardResponse.responseId:
       return new StandardResponse()
     case RegexJavaResponse.responseId:
-      return new RegexResponse()
+      return new RegexJavaResponse()
     default:
       throw new Error(`Unsupported Response type: ${responseId}`);
   }

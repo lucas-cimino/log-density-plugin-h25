@@ -91,20 +91,26 @@ async function generateLogAdvice() {
             console.log(modelResponse)
             let suggestedCode = modelResponse;
 
+            const tabSize = editor.options.tabSize || 4; // Default to 4 if tabSize is not set
+            const endPosition = editor.selection.end;
+            const column = endPosition.character;
+            const tabulation = Math.floor(column / tabSize);
+
+
             // Create a text edit with the generated code
             const edit = new vscode.WorkspaceEdit();
             const range = new vscode.Range(editor.selection.start, editor.selection.end);
-            const tabulation = editor.selection.end.e
             edit.replace(editor.document.uri, range, reponseService.adaptResponse(suggestedCode, tabulation));
 
             // Apply the edit as a preview
             await vscode.workspace.applyEdit(edit);
 
-            // Prompt the user to accept or decline the changes
-            const userResponse = await vscode.window.showInformationMessage(
-                "Log advice generated. Do you want to apply the changes?",
-                "Yes",
-                "No"
+            const userResponse = await vscode.window.showQuickPick(
+                ["Yes", "No"],
+                {
+                    placeHolder: "Log advice generated. Do you want to apply the changes?",
+                    canPickMany: false
+                }
             );
 
             if (userResponse === "Yes") {

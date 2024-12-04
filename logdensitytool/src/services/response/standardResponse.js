@@ -13,7 +13,7 @@ class StandardResponse  extends Response {
      * @param {string} text 
      * @returns (string) text
      */
-    adaptResponse(text, tabulation) {
+    extractLines(text, tabulation) {
       return text
     }
   

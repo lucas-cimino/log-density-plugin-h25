@@ -9,7 +9,7 @@ class Response {
         }
     }
 
-    adaptResponse(text) {
+    extractLines(text) {
         throw new Error("Method 'generate()' must be implemented.");
     }
 }

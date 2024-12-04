@@ -1,14 +1,14 @@
-const { Post, Get } = require('../utils/api');
-const ApiModelService = require('../interface/ApiModelService');
+const { Post, Get } = require('../../utils/api');
+const ApiModel = require('./apiModel');
 const CircularJSON = require('circular-json');
 
 /**
  * Ollama API DOC : https://github.com/ollama/ollama/blob/main/docs/api.md
  */
 
-class OllamaApiModelService extends ApiModelService{
+class OllamaApiModel extends ApiModel{
 
-  apiName = "ollama"
+  static apiId = "ollama"
 
   constructor(url, port, systemPrompt, initialModel, initialToken) {
     super(url, port, systemPrompt, initialModel, initialToken);
@@ -137,4 +137,4 @@ class OllamaApiModelService extends ApiModelService{
   }
 }
 
-module.exports = OllamaApiModelService;
+module.exports = OllamaApiModel;

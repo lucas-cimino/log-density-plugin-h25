@@ -25,4 +25,7 @@ async function Get(url, port, path, params) {
 	return await axios.get(URL + path + parameters);
 }
 
-module.exports = {Post, Get};
+module.exports = {
+	Post, 
+	Get
+};

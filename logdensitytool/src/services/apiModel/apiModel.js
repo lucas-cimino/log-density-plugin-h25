@@ -1,10 +1,10 @@
 // Abstract Base Class
-class ApiModelService {
+class ApiModel {
 
-  apiName
+  static apiId
 
   constructor(url, port, systemPrompt, initialModel, initialToke) {
-    if (new.target === ApiModelService) {
+    if (new.target === ApiModel) {
       throw new Error("Cannot instantiate abstract class ApiModelService directly.");
     }
     this.url = url;
@@ -35,4 +35,4 @@ class ApiModelService {
   }
 }
 
-module.exports = ApiModelService;
+module.exports = ApiModel;

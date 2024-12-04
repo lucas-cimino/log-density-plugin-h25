@@ -3,25 +3,25 @@ const axios = require('axios');
 const { getGitRemoteUrl } = require('./utils/gitHelper'); // Import the required function
 const LogDensityCodeLensProvider = require('./providers/logDensityCodeLensProvider');
 const { registerOpenTabsSideBarProvider, OpenTabsSidebarProvider } = require('./providers/openTabsSidebarProvider');
-const trainModelService = require('./services/trainModelService');
-const runModelService = require('./services/runModelService');
+const { trainModel } = require('./services/trainModelService');
+const { runModel } = require('./services/runModelService');
 const { registerJavaFileProvider, JavaFileProvider } = require('./providers/javaFileProvider');  
 const { registerAnalyzeFileProvider} = require('./providers/analyzeFileProvider');
-const createApiModelService = require('./services/ApiModelFactory');
-const { extractLog } = require('./utils/regex');
-const config = require('./config.json');
-const { api, url, port, system_prompt, default_model, default_token } = config;
+const { createApiModel , createResponse } = require('./services/factory');
+const { configuration } = require('./model_config');
+const { api_id, url, port, system_prompt, default_model, default_token, response_id } = configuration;
 
 let trained = false;
 let remoteUrl; // Store the remote URL if needed
 const codeLensProvider = new LogDensityCodeLensProvider();
-const apiModelService = createApiModelService(api, url, port, system_prompt, default_model, default_token)
+const apiModelService = createApiModel(api_id, url, port, system_prompt, default_model, default_token)
+const reponseService = createResponse(response_id)
 
 async function analyzeDocument(document) {
     if (document?.languageId !== "java") {
         return;
     }
-    const { blocks } = await runModelService.runModel(remoteUrl, document.getText());
+    const { blocks } = await runModel(remoteUrl, document.getText());
     codeLensProvider.setData(blocks);  // Update CodeLens with new data
 }
 
@@ -95,7 +95,7 @@ async function generateLogAdvice() {
             const edit = new vscode.WorkspaceEdit();
             const range = new vscode.Range(editor.selection.start, editor.selection.end);
             const tabulation = editor.selection.end.e
-            edit.replace(editor.document.uri, range, extractLog(suggestedCode, tabulation));
+            edit.replace(editor.document.uri, range, reponseService.adaptResponse(suggestedCode, tabulation));
 
             // Apply the edit as a preview
             await vscode.workspace.applyEdit(edit);
@@ -147,7 +147,7 @@ function activate(context) {
     let disposableTrain = vscode.commands.registerCommand('extension.sendGitHubUrl', async () => {
         const url = await vscode.window.showInputBox({ prompt: 'Enter GitHub URL to train model', value: remoteUrl });
         if (url) {
-            await trainModelService.trainModel(url);
+            await trainModel(url);
             remoteUrl = url;
             console.log(`setting github url... ${remoteUrl}`)
             openTabsSidebarProvider.setUrl(remoteUrl);

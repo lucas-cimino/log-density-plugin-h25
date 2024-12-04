@@ -1,9 +1,9 @@
-const { Post, Get } = require('../utils/api');
-const ApiModelService = require('../interface/ApiModelService');
+const { Post, Get } = require('../../utils/api');
+const ApiModel = require('./apiModel');
 
-class HfApiModelService extends ApiModelService{
+class HfApiModel extends ApiModel {
 
-  apiName = "huggingface"
+  static apiId = "huggingface"
 
   constructor(url, port, systemPrompt, initialModel, initialToken) {
     super(url, port, systemPrompt, initialModel, initialToken);
@@ -93,4 +93,4 @@ class HfApiModelService extends ApiModelService{
   }
 }
 
-module.exports = HfApiModelService;
+module.exports = HfApiModel;

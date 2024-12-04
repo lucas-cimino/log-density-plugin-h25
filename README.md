@@ -8,8 +8,12 @@ The Log Density Analyzer is a Visual Studio Code extension that leverages an AI 
 
 - **Model Training**: Train the AI model using a collection of open-source Java projects.
 - **Log Density Analysis**: Analyze individual Java files to determine the log density in each block of code.
-- **Batch Log Density Prediction**: Obtain predicted and current log densities for multiple Java files at once.
-- **Generate Log Advice**: Generate log advices with a large language model for the code given.
+- **Batch Log Density Prediction**: Obtain predicted and current log densities for multiple Java files at once.  
+
+- **Generate Log Advice**: Generate log advices with a large language model at line in code, for the function / method in which you are
+- **Get Model Info**: Get current configured model
+- **Change Model ID**: Change the configured model and download if not available locally by givving a valid model ID
+- **Change Token**: Change and set a new token (Only used for HuggingFace)
 
 ## Prerequisites
 
@@ -26,7 +30,7 @@ The Log Density Analyzer is a Visual Studio Code extension that leverages an AI 
    docker-compose -f ./services/docker-compose.yml up --build
    ```
 
-3. Des services vont démarrés
+3. 3 services will start
    - services-training
    - services-model_runner
    - ollama
@@ -41,26 +45,7 @@ The Log Density Analyzer is a Visual Studio Code extension that leverages an AI 
 
 ## Ollama
 
-By default, ollama is bundled with the backend. There are some requirements to run on GPU, you can follow the instruction in `Option 2` you can also download the app to run the backend.
-
-### App - Ollama
-
-- Download here : [Ollama](https://ollama.com/)
-- Start backend API with this command in terminal `ollama serve`
-
-### Docker - Ollama
-
-- Instruction here : [Docker Hub : Ollama](https://hub.docker.com/r/ollama/ollama)
-
-#### Some usefull commands
-
-- Download model : `ollama pull <model:size>`
-- Run model in terminal : `ollama run <model:size>`
-
-#### More information
-
-- API Doc : [Github: Ollama API Doc](https://github.com/ollama/ollama/blob/main/docs/api.md)
-- Models available : [Ollama Model Search](https://ollama.com/search)
+For more information (using GPU, App, Commands and API) : [Ollama](/docs/ollama.md)
 
 ## Testing
 

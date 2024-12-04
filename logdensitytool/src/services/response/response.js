@@ -5,7 +5,7 @@ class Response {
 
     constructor() {
         if (new.target === Response) {
-        throw new Error("Cannot instantiate abstract class ApiModelService directly.");
+            throw new Error("Cannot instantiate abstract class ApiModelService directly.");
         }
     }
 
@@ -15,4 +15,3 @@ class Response {
 }
 
 module.exports = Response;
-  

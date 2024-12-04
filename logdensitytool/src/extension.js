@@ -47,13 +47,41 @@ async function generateLogAdvice() {
         let startLine = lineNumber;
         let endLine = lineNumber;
 
+        // Compteur pour suivre les accolades
+        let openBraces = 0;
+
         // Chercher le début de la méthode
-        while (startLine > 0 && !document.lineAt(startLine).text.trim().endsWith("{")) {
+        while (startLine > 0) {
+            const lineText = document.lineAt(startLine).text.trim();
+
+            // Compter les accolades fermées et ouvertes
+            openBraces += (lineText.match(/\}/g) || []).length;
+            openBraces -= (lineText.match(/\{/g) || []).length;
+
+            if (openBraces < 0) {
+                // Trouvé le début de la méthode
+                break;
+            }
+
             startLine--;
         }
 
+        // Réinitialiser le compteur pour chercher la fin
+        openBraces = 0;
+
         // Chercher la fin de la méthode
-        while (endLine < document.lineCount - 1 && !document.lineAt(endLine).text.trim().endsWith("}")) {
+        while (endLine < document.lineCount - 1) {
+            const lineText = document.lineAt(endLine).text.trim();
+
+            // Compter les accolades ouvertes et fermées
+            openBraces += (lineText.match(/\{/g) || []).length;
+            openBraces -= (lineText.match(/\}/g) || []).length;
+
+            if (openBraces === 0 && lineText.includes('}')) {
+                // Trouvé la fin de la méthode
+                break;
+            }
+
             endLine++;
         }
 

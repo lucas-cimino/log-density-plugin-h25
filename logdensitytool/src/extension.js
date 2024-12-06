@@ -1,5 +1,5 @@
+const StandardResponse = require("./services/response/standardResponse");
 const vscode = require('vscode');
-const axios = require('axios');
 const { getGitRemoteUrl } = require('./utils/gitHelper'); // Import the required function
 const LogDensityCodeLensProvider = require('./providers/logDensityCodeLensProvider');
 const { registerOpenTabsSideBarProvider, OpenTabsSidebarProvider } = require('./providers/openTabsSidebarProvider');
@@ -9,16 +9,26 @@ const { registerJavaFileProvider, JavaFileProvider } = require('./providers/java
 const { registerAnalyzeFileProvider } = require('./providers/analyzeFileProvider');
 const { createApiModel, createResponse } = require('./services/factory');
 const { configuration } = require('./model_config');
-const { api_id, url, port, system_prompt, default_model, default_token, response_id } = configuration;
+const { readFile } = require("./utils/fileReader");
+const { buildPrompt, getSurroundingMethodText, extractAttributesFromJson } = require("./utils/modelTools")
+const path = require('path');
+
+const { api_id, url, port, prompt_file, default_model, default_token, response_id, attributes_to_comment, comment_string } = configuration;
 
 let trained = false;
 let remoteUrl; // Store the remote URL if needed
+let apiModelService;
+let reponseService;
 const codeLensProvider = new LogDensityCodeLensProvider();
-const apiModelService = createApiModel(api_id, url, port, system_prompt, default_model, default_token)
-const reponseService = createResponse(response_id)
+
+
+function initialize() {
+    apiModelService = createApiModel(api_id, url, port, default_model, default_token);
+    reponseService = createResponse(response_id);
+}
 
 async function analyzeDocument(document) {
-    if (document?.languageId !== "java") {
+    if (document && document.languageId !== "java") {
         return;
     }
     const { blocks } = await runModel(remoteUrl, document.getText());
@@ -32,68 +42,20 @@ async function generateLogAdvice() {
         return;
     }
 
-
     const document = editor.document;
     const selection = editor.selection;
     const cursorLine = selection.active.line; // Ligne actuelle du curseur
+    let selectedText = ""
 
     if (!selection.isEmpty) {
         // L'utilisateur a sélectionné du texte (méthode)
         selectedText = document.getText(selection);
     }
 
-    // Fonction pour extraire la méthode autour d'une ligne spécifique
-    function getSurroundingMethodText(lineNumber) {
-        let startLine = lineNumber;
-        let endLine = lineNumber;
-
-        // Compteur pour suivre les accolades
-        let openBraces = 0;
-
-        // Chercher le début de la méthode
-        while (startLine > 0) {
-            const lineText = document.lineAt(startLine).text.trim();
-
-            // Compter les accolades fermées et ouvertes
-            openBraces += (lineText.match(/\}/g) || []).length;
-            openBraces -= (lineText.match(/\{/g) || []).length;
-
-            if (openBraces < 0) {
-                // Trouvé le début de la méthode
-                break;
-            }
-
-            startLine--;
-        }
-
-        // Réinitialiser le compteur pour chercher la fin
-        openBraces = 0;
-
-        // Chercher la fin de la méthode
-        while (endLine < document.lineCount - 1) {
-            const lineText = document.lineAt(endLine).text.trim();
-
-            // Compter les accolades ouvertes et fermées
-            openBraces += (lineText.match(/\{/g) || []).length;
-            openBraces -= (lineText.match(/\}/g) || []).length;
-
-            if (openBraces === 0 && lineText.includes('}')) {
-                // Trouvé la fin de la méthode
-                break;
-            }
-
-            endLine++;
-        }
-
-        // Récupérer le texte de la méthode complète
-        const methodRange = new vscode.Range(startLine, 0, endLine, document.lineAt(endLine).text.length);
-        return document.getText(methodRange);
-    }
-
-    selectedText = getSurroundingMethodText(cursorLine);
+    selectedText = getSurroundingMethodText(document, cursorLine);
 
     // Générer un prompt spécifique pour le modèle
-    const prompt = (
+    let prompt = (
         // Promt modifiable dans le backend dans un fichier config
         "Context: Suggest 1 log (System.out.println()) to add to method the following JAVA functions, don't return the input, only the output: \n"
         //+ "Please only add 2 to 5 lines of code to improve log messages to the following code: "
@@ -111,11 +73,36 @@ async function generateLogAdvice() {
         try {
             // Call your LLM service
             const model = await apiModelService.getModel();
+
             let linesToInsert = [];
             while (linesToInsert.length === 0) {
+                // Get the current directory of the script
+                const projectBasePath = path.resolve(__dirname, "..", "..");
+                let system_prompt = await readFile(path.join(projectBasePath, "prompt", prompt_file)) // Extract prompt from txt file
+
+                let attributes = []
+                // Find and extract attributes from prompt {{json}}
+                if (system_prompt.includes("{{") && system_prompt.includes("}}")) {
+                    attributes = extractAttributesFromJson(system_prompt, attributes_to_comment) // Extract attributes from prompt {{json}}
+                    system_prompt = system_prompt.replace("{{", "{");
+                    system_prompt = system_prompt.replace("}}", "}");
+                }
+                
+                // Build Prompt
+                const builtPrompt = buildPrompt(selectedText, system_prompt, "{vscode_content}")
+                if (builtPrompt != null) {
+                    prompt = builtPrompt
+                }
+              
                 console.log("Generating log advice...");
                 const modelResponse = await apiModelService.generate(model, null, prompt, null, null);
-                linesToInsert = reponseService.extractLines(modelResponse, 0);
+                if (attributes.length > 0) {
+                    linesToInsert = reponseService.extractLines(modelResponse, attributes, attributes_to_comment, comment_string);
+                } else {
+                    const standardResponse = createResponse(StandardResponse.responseId)
+                    linesToInsert = standardResponse.extractLines(modelResponse, attributes, attributes_to_comment, comment_string);
+                }
+                
             }
 
             let cursorPosition = editor.selection.active;
@@ -158,14 +145,15 @@ async function generateLogAdvice() {
             }
         } catch (error) {
             console.error(error);
-            vscode.window.showErrorMessage("Failed to get code suggestion.");
+            vscode.window.showErrorMessage("Failed to get code suggestion. " + error.message);
         }
     });
 }
 
 function activate(context) {
+    initialize();
     const workspaceRoot = vscode.workspace.rootPath;
-
+    
     // Register Codelens
     context.subscriptions.push(vscode.languages.registerCodeLensProvider({ language: 'java' }, codeLensProvider));
 
@@ -233,7 +221,7 @@ function activate(context) {
 
     let changeModel = vscode.commands.registerCommand('log-advice-generator.changeModelId', async () => {
         const MODEL_ID = await apiModelService.getModel();
-        const model = await vscode.window.showInputBox({ prompt: `Enter ${api} Model ID`, value: MODEL_ID });
+        const model = await vscode.window.showInputBox({ prompt: `Enter ${api_id} Model ID`, value: MODEL_ID });
         if (model) {
             await vscode.window.withProgress({
                 location: vscode.ProgressLocation.Notification,
@@ -261,7 +249,7 @@ function activate(context) {
 
 
     let changeToken = vscode.commands.registerCommand('log-advice-generator.changeToken', async () => {
-        const token = await vscode.window.showInputBox({ prompt: `Enter ${api} Token` });
+        const token = await vscode.window.showInputBox({ prompt: `Enter ${api_id} Token` });
         if (token) {
             console.log(`Changing token`)
             const response = await apiModelService.changeToken(token);

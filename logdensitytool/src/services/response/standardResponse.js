@@ -2,18 +2,24 @@ const Response = require("./response")
 
 class StandardResponse extends Response {
 
-  static responseId = "standard"
-
   constructor() {
     super()
   }
 
   /**
+   * Returns response ID
+   * @returns string of responseId
+   */
+  static get responseId() {
+    return "standard";
+  }
+
+  /**
    * Return model response without modification
    * @param {string} text 
-   * @returns (string) text
+   * @returns {string} text list
    */
-  extractLines(text) {
+  extractLines(text, requiredAttributes, attributesToComment, commentString) {
     return text.split('\n')
   }
 

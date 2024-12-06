@@ -4,16 +4,19 @@ const OllamaApiModel = require("./services/apiModel/ollamaApiModel");
 
 // Response IDs type available
 const JSONResponseHandler = require("./services/response/JSONResponseHandler");
+const RegexJavaResponse = require("./services/response/regexJavaResponse")
 const StandardResponse = require("./services/response/standardResponse");
 
 let configuration = {
     api_id : OllamaApiModel.apiId, //ollama and huggingface available
     url : "http://localhost",
     port : "11434",
-    system_prompt : "You are an assistant for developers who want to instrument their methods with logging statements. \r\nInstruction:  Generate one log message to add to this Java method in the tagged position with <Log_position>: \r\nThe response should be in the following json form and without any other explanations: \r\n\r\n{\r\n     log_statement: \"logger.<level>(<log message or variable>);\", \r\n     reason: \"how did you reason to generate the log message\"\r\n}\r\n",
+    prompt_file : "generate_log.txt", // From prompt Folder
     default_model : "llama3.2:3b",
     default_token : "", // Only used for huggingface
-    response_id :  JSONResponseHandler.responseId // standard or regex available
+    response_id :  JSONResponseHandler.responseId, // standard or regex available
+    attributes_to_comment : ["reason"], // list of attributes to comment
+    comment_string : "//" // Comment string to add
 }
 
 

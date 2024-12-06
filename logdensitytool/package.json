@@ -11,9 +11,7 @@
     "Other"
   ],
   "activationEvents": [
-    "onLanguage:javascript",
-    "onLanguage:typescript",
-    "onCommand:log-advice-generator.generateLogAdvice"],
+    "*"],
   "main": "./src/extension.js",
   "contributes": {
     "commands": [

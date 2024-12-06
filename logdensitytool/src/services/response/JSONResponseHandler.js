@@ -2,42 +2,68 @@ const Response = require("./response")
 
 class JSONResponseHandler extends Response {
 
-  static get responseId() {
-    return "json";
-  }
+  
 
   constructor() {
     super()
   }
 
   /**
+   * Returns response ID
+   * @returns string of responseId
+   */
+  static get responseId() {
+    return "json";
+  }
+
+  /**
    * Extract log_statement and reason in model response and 
    * build response
    * @param {string} text Model response
-   * @param {int} tabluation tabulation in Code editor
-   * @returns {string} built response :
+   * @param {string[]} requiredAttributes - List of attribute names to check in the JSON object.
+   * @returns {string[]} list of response lines
    * 
-   *Ex:
-      reason\n
-      \t\tlog_statement
    */
-  extractLines(text) {
+  extractLines(text, requiredAttributes, attributesToComment, commentString) {
+
     let lines = this.loadJSON(text)
-    if (this.validateJSON(lines) == false) {
+    if (this.validateJSON(lines, requiredAttributes) == false) {
       return []
     }
-    return ['//' + lines.reason, lines.log_statement]
+    let extractedAttributes = [];
+
+    // Check if each required attribute exists in the JSON and add it to the list
+    for (let attribute of requiredAttributes) {
+        if (lines.hasOwnProperty(attribute)) {
+          let value = lines[attribute];
+          // If the attribute is in attributesToComment, prepend "//"
+          if (attributesToComment.includes(attribute)) {
+            value = commentString + " " + value;
+            extractedAttributes.unshift(value); // Add the value of the attribute to the result list
+          } else {
+            extractedAttributes.push(value); // Add the value of the attribute to the result list
+          }
+          
+        }
+    }
+    return extractedAttributes
   }
 
-  validateJSON(json) {
+  validateJSON(json, requiredAttributes) {
     if (json == null) {
-      return false
+        return false;
     }
-    if (json.hasOwnProperty('reason') == false || json.hasOwnProperty('log_statement') == false) {
-      return false
+    
+    // Check if all required attributes are present in the JSON object
+    for (let attribute of requiredAttributes) {
+        if (!json.hasOwnProperty(attribute)) {
+            return false;
+        }
     }
-    return true
-  }
+    
+    return true;
+}
+
 
   loadJSON(str) {
     let json;

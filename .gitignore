@@ -17,3 +17,5 @@ open_source_java_projects/**
 # Ignore .idea
 .idea/
 .venv
+
+**.DS_Store

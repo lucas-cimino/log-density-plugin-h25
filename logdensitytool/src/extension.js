@@ -10,10 +10,10 @@ const { registerAnalyzeFileProvider } = require('./providers/analyzeFileProvider
 const { createApiModel, createResponse } = require('./services/factory');
 const { configuration } = require('./model_config');
 const { readFile } = require("./utils/fileReader");
-const { buildPrompt, getSurroundingMethodText, extractAttributesFromJson } = require("./utils/modelTools")
+const { buildPrompt, getSurroundingMethodText, extractAttributesFromPrompt } = require("./utils/modelTools")
 const path = require('path');
 
-const { api_id, url, port, prompt_file, default_model, default_token, response_id, attributes_to_comment, comment_string } = configuration;
+const { api_id, url, port, prompt_file, default_model, default_token, response_id, attributes_to_comment, comment_string, injection_variable } = configuration;
 
 let trained = false;
 let remoteUrl; // Store the remote URL if needed
@@ -83,13 +83,13 @@ async function generateLogAdvice() {
                 let attributes = []
                 // Find and extract attributes from prompt {{json}}
                 if (system_prompt.includes("{{") && system_prompt.includes("}}")) {
-                    attributes = extractAttributesFromJson(system_prompt, attributes_to_comment) // Extract attributes from prompt {{json}}
+                    attributes = extractAttributesFromPrompt(system_prompt, attributes_to_comment) // Extract attributes from prompt {{json}}
                     system_prompt = system_prompt.replace("{{", "{");
                     system_prompt = system_prompt.replace("}}", "}");
                 }
                 
                 // Build Prompt
-                const builtPrompt = buildPrompt(selectedText, system_prompt, "{vscode_content}")
+                const builtPrompt = buildPrompt(selectedText, system_prompt, injection_variable)
                 if (builtPrompt != null) {
                     prompt = builtPrompt
                 }

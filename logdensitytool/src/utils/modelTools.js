@@ -81,7 +81,7 @@ function getSurroundingMethodText(document, lineNumber) {
  * @param {string[]} attributesToComment - List of attributes to comment used to reorder list
  * @returns {string[]} - List of attribute names before the colon.
  */
-function extractAttributesFromJson(text, attributesToComment) {
+function extractAttributesFromPrompt(text, attributesToComment) {
     const regex = /{{(.*?)}}/s; // get text between {{ and }}
     const matches = text.match(regex);
 
@@ -124,5 +124,5 @@ function extractAttributesBeforeColon(text) {
 module.exports = {
     buildPrompt,
     getSurroundingMethodText,
-    extractAttributesFromJson
+    extractAttributesFromPrompt
 };

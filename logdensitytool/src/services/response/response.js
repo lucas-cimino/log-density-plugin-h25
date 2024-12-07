@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 // Abstract Base Class
 class Response {
 
@@ -16,9 +17,12 @@ class Response {
       }
 
     /**
-     * extract content form text, as list, each line is one item in list
-     * @param {string} text 
-     */
+ * extract content form text, as list, each line is one item in list
+ * @param {string} text 
+ * @param {Array} requiredAttributes Attributes to find
+ * @param {Array} attributesToComment List of attributes where the comment string should be added
+ * @param {string} commentString Comment string to add
+ */
     extractLines(text, requiredAttributes, attributesToComment, commentString) {
         throw new Error("Method 'extractLines()' must be implemented.");
     }

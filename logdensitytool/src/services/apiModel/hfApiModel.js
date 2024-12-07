@@ -1,4 +1,4 @@
-const { Post, Get } = require('../../utils/api');
+const { post, get } = require('../../utils/api');
 const ApiModel = require('./apiModel');
 
 class HfApiModel extends ApiModel {
@@ -32,7 +32,7 @@ class HfApiModel extends ApiModel {
     }
 
     try {
-      const response = await Post(this.url, this.port, '/predict', {
+      const response = await post(this.url, this.port, '/predict', {
         model: model, // Not implemented
         prompt: this.buildPrompt(system, prompt), 
         max_new_tokens: max_token, 
@@ -50,7 +50,7 @@ class HfApiModel extends ApiModel {
    * @returns {completed: boolean, model: string} completed, true if model changed, false if not, model, indicate the model configured
    */
   async changeModel(modelName) {
-    const response = await Post(this.url, this.port, '/change_model', {hf_model_id: modelName})
+    const response = await post(this.url, this.port, '/change_model', {hf_model_id: modelName})
     this.model = modelName
     return {completed: response.data.completed, model: response.data.model_name}
   }
@@ -60,7 +60,7 @@ class HfApiModel extends ApiModel {
    * @returns {model: string|list} list of models or string
    */
   async info() {
-    const response = await Get(this.url, this.port, '/model_info', null)
+    const response = await get(this.url, this.port, '/model_info', null)
     return {model: response.data.model_name}
   }
 
@@ -69,7 +69,7 @@ class HfApiModel extends ApiModel {
    * @returns {model: string} Model configured
    */
   async getModel() {
-    const response = await Get(this.url, this.port, '/model_info', null)
+    const response = await get(this.url, this.port, '/model_info', null)
     if (response.data.hasOwnProperty('model_name')) {
         return response.data.model_name
     } else 
@@ -83,7 +83,7 @@ class HfApiModel extends ApiModel {
    */
   async changeToken(token) {
     this.token = token
-    const response = await Post(this.url, this.port, '/change_token', {hf_token: this.token})
+    const response = await post(this.url, this.port, '/change_token', {hf_token: this.token})
     return {completed: response.data.completed, message: ""}
   }
 

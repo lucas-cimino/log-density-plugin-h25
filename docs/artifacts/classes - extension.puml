@@ -1,0 +1,192 @@
+@startuml classes - extension
+skinparam linetype polyline
+
+title Diagramme de classes - logdensitytool (extension frontend)
+
+class vscode.TreeItem {
+  +label: str
+  +collapsibleState: TreeItemCollapsibleState
+  +command: Command
+  +iconPath: str
+}
+
+package logdensitytool {
+    package src {
+        package models {
+            class FolderItem {
+                -uri: str
+                -contextValue: str
+                -iconPath: int
+            }
+
+            class GroupItem {
+                -subItems: GroupItem or JavaItem
+                -contextValue: str
+                +get tooltip()
+            }
+
+            class JavaItem {
+                -filepath: str
+                -contextValue: str
+                -iconPath: int
+                -density: float
+                -predictedDensity: float
+                -extensionPath: string
+                +update(density, predictedDensity, densityDifference)
+                +get tooltip()
+                +get description()
+            }
+
+            vscode.TreeItem <|-- FolderItem
+            vscode.TreeItem <|-- GroupItem
+            vscode.TreeItem <|-- JavaItem
+        }
+
+        package services {
+            class analyzeProject {
+                +analyzeFiles(remoteUrl, fileContents)
+            }
+
+            class runModelService {
+                +runModel(url, fileContent)
+            }
+
+            class trainModelService {
+                +trainModel(url)
+            }
+            package apiModel {
+                abstract class apiModel{
+                    get apiId()
+                    +generate(model, system, prompt, temperature, max_token)
+                    +changeModel(modelName)
+                    +info()
+                    +getModel()
+                    +changeToken(token)
+
+                }
+                class hfApiModel 
+                class ollamaApiModel
+
+                apiModel <|-- hfApiModel
+                apiModel <|-- ollamaApiModel
+            }
+            package response {
+                abstract class response{
+                    get responseId()
+                    +extractLines(text, requiredAttributes, attributesToComment, commentString)
+                }
+                class standardResponse 
+                class regexJavaResponse
+                class JSONResponseHandler
+
+                response <|-- standardResponse 
+                response <|-- regexJavaResponse
+                response <|-- JSONResponseHandler
+            }
+            class factory {
+                +createApiModel(apiId, url, port, defaultModel, defaultToken)
+                +createResponse(responseId)
+            }
+
+            response <-- factory
+            apiModel <-- factory
+        }
+
+        package utils {
+            class fileReader {
+                +readFile(filepath)
+            }
+
+            class gitHelper {
+                +getGitRepo()
+                +getGitRemoteUrl()
+                +getFileStatus(fileUri)
+            }
+            class api {
+                +post(url, port, path, args)
+                +get(url, port, path, params)
+            }
+            class modelTools {
+                +buildPrompt(text, systemPrompt, attribute)
+                +getSurroundingMethodText(document, lineNumber)
+                +extractAttributesFromPrompt(text, attributesToComment) 
+            }
+        }
+        
+        package providers {
+            class LogDensityCodeLensProvider {
+                -data: []
+                -log_density_classes: []
+                +setData(data)
+                +provideCodeLenses(document, token)
+            }
+
+            class AnalyzeFileProvider {
+                -javaFileProvider: JavaFileProvider
+                -analyzeList Map<str, JavaItem>
+                -remoteUrl: str
+                +refresh()
+                +setRemoteUrl(url)
+                +setJavaFileProvider(javaFileProvider)
+                +addFileToAnalyze(javaItem)
+                +removeFileFromAnalyze(filePath)
+                +removeAllFiles()
+                +sendFilesForAnalysis()
+            }
+            AnalyzeFileProvider <-> JavaFileProvider
+
+            class JavaFileProvider {
+                -analyzeFileProvider: AnalyzeFileProvider
+                -itemsMap: Map<str, JavaItem>
+                +sendFileToAnalyze(javaItem)
+                +getAnalyzeList()
+                +getRootFolders()>
+                +getJavaFilesAndFolders(uri)
+                +collectJavaFiles(uri)
+                +updateJavaFiles(results)
+                -createFolderCommand(uri)
+                -createFileCommand(uri)
+            }
+
+            class OpenTabsSidebarProvider {
+                -url: str
+                -javaMap: Map<str, JavaItem>
+                +onDidChangeTreeData
+                +getGroupItems()
+                +processTabs(tabs)
+                +setUrl(url)
+                +getUrl()
+                +predictOpenTabs()
+                +removeClosedDocument(filepath)
+            }
+        }
+    }
+
+    class extension {
+        +activate()
+    }
+
+    extension -u-> trainModelService
+    extension -u-> runModelService
+    extension -u-> gitHelper
+    extension -u-> providers
+    extension -u-> factory
+    extension -u-> modelTools
+
+    src.services.apiModel -u-> api
+    src.services.response -u-> api      
+
+    AnalyzeFileProvider --> analyzeProject
+    AnalyzeFileProvider --> fileReader
+    AnalyzeFileProvider -u--> JavaItem
+
+    JavaFileProvider -u--> FolderItem
+    JavaFileProvider -u--> JavaItem
+
+    OpenTabsSidebarProvider -u--> GroupItem
+    OpenTabsSidebarProvider -u--> JavaItem
+    OpenTabsSidebarProvider --> analyzeProject
+    OpenTabsSidebarProvider --> fileReader
+}
+
+@enduml

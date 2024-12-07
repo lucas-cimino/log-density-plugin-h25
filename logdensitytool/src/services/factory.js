@@ -8,15 +8,15 @@ const StandardResponse = require("./response/standardResponse");
  * Creates an API service instance based on the api attribute name in config file.
  * @returns {HfApiModel | OllamaApiModel} The selected API service instance.
  */
-function createApiModel(api, url, port, default_model, default_token) {
+function createApiModel(apiId, url, port, default_model, defaultToken) {
 
-  switch (api) {
+  switch (apiId) {
     case OllamaApiModel.apiId:
-      return new OllamaApiModel(url, port, default_model, default_token);
+      return new OllamaApiModel(url, port, default_model, defaultToken);
     case HfApiModel.apiId:
-      return new HfApiModel(url, port, default_model, default_token);
+      return new HfApiModel(url, port, default_model, defaultToken);
     default:
-      throw new Error(`Unsupported API name: ${api}`);
+      throw new Error(`Unsupported API name: ${apiId}`);
   }
 }
 

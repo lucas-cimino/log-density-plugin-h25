@@ -1,14 +1,15 @@
 const axios = require('axios');
 
 /**
+ * API Post method
  * 
- * @param {string} url url to call
- * @param {string} port port of url to call
- * @param {string} path path to call at url
- * @param {json} args json body
- * @returns response
+ * @param {string} url string of service url
+ * @param {string} port string of service port
+ * @param {string} path string of path ex: "/help"
+ * @param {json} args json body for request
+ * @returns API response
  */
-async function Post(url, port, path, args) {
+async function post(url, port, path, args) {
 	const URL = `${url}:${port}`
 	try {
 		const response = await axios.post(URL + path, args, {
@@ -25,12 +26,19 @@ async function Post(url, port, path, args) {
 		handleError(error)
 	}
 }
+
+
 /**
- * path : string of path ex: "/help"
- * params : map of params ex: {param1: "testing1", param2: 2}
+ * API Get method
+ * 
+ * @param {string} url string of service url
+ * @param {string} port string of service port
+ * @param {string} path string of path ex: "/help"
+ * @param {json} params map of params ex: {param1: "testing1", param2: 2}
  * will add params to url ex: http://localhost:8080/api?param1=testing1&param2=2
+ * @returns API response
  */
-async function Get(url, port, path, params) {
+async function get(url, port, path, params) {
 	try {
 		const URL = `${url}:${port}`
 		let parameters = ""
@@ -64,11 +72,9 @@ function handleError(error) {
         // console.error('Error setting up request:', error.code);
 		throw new Error('Request failed');
     }
-
-
 }
 
 module.exports = {
-	Post, 
-	Get
+	post, 
+	get
 };

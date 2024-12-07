@@ -1,4 +1,4 @@
-@startuml
+@startuml classes - extension
 skinparam linetype polyline
 
 title Diagramme de classes - logdensitytool (extension frontend)
@@ -54,6 +54,42 @@ package logdensitytool {
             class trainModelService {
                 +trainModel(url)
             }
+            package apiModel {
+                abstract class apiModel{
+                    get apiId()
+                    +generate(model, system, prompt, temperature, max_token)
+                    +changeModel(modelName)
+                    +info()
+                    +getModel()
+                    +changeToken(token)
+
+                }
+                class hfApiModel 
+                class ollamaApiModel
+
+                apiModel <|-- hfApiModel
+                apiModel <|-- ollamaApiModel
+            }
+            package response {
+                abstract class response{
+                    get responseId()
+                    +extractLines(text, requiredAttributes, attributesToComment, commentString)
+                }
+                class standardResponse 
+                class regexJavaResponse
+                class JSONResponseHandler
+
+                response <|-- standardResponse 
+                response <|-- regexJavaResponse
+                response <|-- JSONResponseHandler
+            }
+            class factory {
+                +createApiModel(apiId, url, port, defaultModel, defaultToken)
+                +createResponse(responseId)
+            }
+
+            response <-- factory
+            apiModel <-- factory
         }
 
         package utils {
@@ -66,8 +102,17 @@ package logdensitytool {
                 +getGitRemoteUrl()
                 +getFileStatus(fileUri)
             }
+            class api {
+                +post(url, port, path, args)
+                +get(url, port, path, params)
+            }
+            class modelTools {
+                +buildPrompt(text, systemPrompt, attribute)
+                +getSurroundingMethodText(document, lineNumber)
+                +extractAttributesFromPrompt(text, attributesToComment) 
+            }
         }
-
+        
         package providers {
             class LogDensityCodeLensProvider {
                 -data: []
@@ -125,6 +170,11 @@ package logdensitytool {
     extension -u-> runModelService
     extension -u-> gitHelper
     extension -u-> providers
+    extension -u-> factory
+    extension -u-> modelTools
+
+    src.services.apiModel -u-> api
+    src.services.response -u-> api      
 
     AnalyzeFileProvider --> analyzeProject
     AnalyzeFileProvider --> fileReader

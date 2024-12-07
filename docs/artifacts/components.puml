@@ -1,4 +1,4 @@
-@startuml
+@startuml components
 
 title Diagramme de composants
 
@@ -19,21 +19,26 @@ cloud "Serveur" as server {
 
     node "Service générateur de modèles" as serviceA
 
+    node "Service Ollama" as serviceOllama
+
     database "services_training_data" <<Volume partagé>> as sharedVolume {
         file "Modèle AI" as model
     }
 }
 
-team -u-> plugin: "Demande la création d'un modèle AI en\nenvoyant l'URL GitHub d'un projet Java\n\nDemande une analyse du de fichiers Java"
+team -u-> plugin: "Demande la création d'un modèle AI en\nenvoyant l'URL GitHub d'un projet Java\n\nDemande une analyse du de fichiers Java\n\nDemande la génération de logs\npour un fichier Java"
 team -u-> project: "Effectue des modifications"
 
 plugin -d-> serviceA: "Envoie le projet Java analysé"
 serviceA -u-> sharedVolume: "Crée un modèle AI"
 
-sharedVolume .> serviceB: "Résultats d'analyse"
-serviceB -l-> sharedVolume: "Analyse des fichiers Java"
+sharedVolume -r-> serviceB: "Résultats d'analyse"
+serviceB --> sharedVolume: "Analyse des fichiers Java"
 
-plugin -l-> serviceB: "Envoie le contenu du fichier Java à analyser"
-serviceB .> plugin: "Pourcentage de densité de log d'un fichier Java"
+plugin --> serviceB: "Envoie le contenu du fichier Java à analyser"
+serviceB --> plugin: "Pourcentage de densité de log d'un fichier Java"
+
+plugin -d-> serviceOllama: "Requete la génération de logs"
+serviceOllama -l-> files: "Ajoute les logs générés\nau fichier Java"
 
 @enduml

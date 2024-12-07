@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 // Abstract Base Class
 class ApiModel {
 

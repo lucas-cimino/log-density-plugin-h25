@@ -1,4 +1,5 @@
-const { Post, Get } = require('../../utils/api');
+/* eslint-disable no-unused-vars */
+const { post, get } = require('../../utils/api');
 const ApiModel = require('./apiModel');
 const CircularJSON = require('circular-json');
 
@@ -44,7 +45,7 @@ class OllamaApiModel extends ApiModel{
       let usedTemp = 0.8 // (Default: 0.8) value between 0 and 1. Increasing the temperature will make the model answer more creatively. 
       if (temperature !=null && temperature >= 0 && temperature <= 1 ) usedTemp = temperature
 
-      const response = await Post(this.url, this.port, '/api/generate', {
+      const response = await post(this.url, this.port, '/api/generate', {
           model: model, // Not implemented
           prompt: prompt, 
           system: system,
@@ -71,7 +72,7 @@ class OllamaApiModel extends ApiModel{
       await this.unload(this.model)
     }
     console.log(`Pull ${modelName}`)
-    const response = await Post(this.url, this.port, '/api/pull', {
+    const response = await post(this.url, this.port, '/api/pull', {
         model: modelName,
         stream: false
     })
@@ -90,7 +91,7 @@ class OllamaApiModel extends ApiModel{
    * @returns {model: string|list} list of models or string
    */
   async info() {
-    const response = await Get(this.url, this.port, '/api/ps', null)
+    const response = await get(this.url, this.port, '/api/ps', null)
     // !! Circular reference in response, use next line to log
     //console.log(CircularJSON.stringify(response))
     if (response.data.models.length > 0) {
@@ -111,7 +112,7 @@ class OllamaApiModel extends ApiModel{
    */
   async getModel() {
 
-    const response = await Get(this.url, this.port, '/api/ps', null)
+    const response = await get(this.url, this.port, '/api/ps', null)
     if (response.data.models.length > 0) {
         return response.data.models[0].name;
     } else 
@@ -139,7 +140,7 @@ class OllamaApiModel extends ApiModel{
   }
 
   async load(model) {
-    const response = await Post(this.url, this.port, '/api/generate', {
+    const response = await post(this.url, this.port, '/api/generate', {
         model: model,
         stream: false,
     })
@@ -147,7 +148,7 @@ class OllamaApiModel extends ApiModel{
   }
 
   async unload(model) {
-    const response = await Post(this.url, this.port, '/api/generate', {
+    const response = await post(this.url, this.port, '/api/generate', {
         model: model,
         stream: false,
         keep_alive: 0

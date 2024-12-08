@@ -1,11 +1,6 @@
 # log-density-plugin
 
-The Log Density Analyzer is a Visual Studio Code extension that leverages an AI model trained on open-source Java projects. It provides functionalities to predict and check the log density of `.java` files and projects, helping developers understand and optimize their logging practices.
 
-Example:
-**log-density-plugin** is a tool/library/service that helps [target audience] achieve [specific goal]. It supports [key features or technologies used].
-
-[![Build Status](https://example.com/build-status.svg)](https://example.com)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Documentation](https://img.shields.io/badge/docs-online-brightgreen)](/docs)
 
@@ -22,8 +17,7 @@ Example:
 
 ## About
 
-**log-density-plugin** was created to solve [specific problem] for [target audience].
-It includes the following key features:
+This project is about a Visual Studio Code extension that groups functionalities about logging method in Java Project. It uses a AI model trained on open-source Java projects to predict and check the log density of `.java` files and projects, helping developers understand and optimize their logging practices. It also offers the possibility to generate log advices with a large language model at line in code, for the function / method in which you are. Basics functionalities are:
 
 - Model Training
 - Log Density Analysis

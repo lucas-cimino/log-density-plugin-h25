@@ -1,6 +1,8 @@
 # Usage of log-density-plugin
 
-Welcome to the documentation for log-density-plugin project. 
+[[Return]](README.md)
+
+Welcome to the documentation for log-density-plugin project.
 
 Make sure you have the prerequisites installed before using the extension. The prerequisites are listed in the [Installation Guide](INSTALLATION.md).
 

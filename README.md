@@ -1,6 +1,5 @@
 # log-density-plugin
 
-
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Documentation](https://img.shields.io/badge/docs-online-brightgreen)](/docs)
 

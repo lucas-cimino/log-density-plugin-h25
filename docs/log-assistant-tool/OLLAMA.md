@@ -1,6 +1,6 @@
 # Ollama
 
-[Retour REAMDE.md](/README.md#ollama)
+[[Return]](../INSTALLATION.md)
 
 By default, ollama is bundled with the backend. There are some requirements to run on GPU, you can follow the instruction in [Docker](#docker).
 Otherwise, you can use the [App](#app)

@@ -2,6 +2,8 @@
 
 # Installation
 
+[[Return]](README.md)
+
 ## Prerequisites
 
 - Docker

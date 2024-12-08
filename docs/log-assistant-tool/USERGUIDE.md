@@ -2,6 +2,8 @@
 
 # Userguide to the Log Assistant Tool
 
+[[Return]](../USAGE.md)
+
 ## Table of Contents
 
 - [Userguide to the Log Assistant Tool](#userguide-to-the-log-assistant-tool)

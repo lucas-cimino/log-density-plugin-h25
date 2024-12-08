@@ -1,5 +1,7 @@
 # Plant UML Diagrams
 
+[[Return]](README.md)
+
 This document is simply to visualize the Plant UML Diagrams of the project.
 
 ## Table of Contents

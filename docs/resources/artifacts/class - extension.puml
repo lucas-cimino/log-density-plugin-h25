@@ -1,7 +1,7 @@
-@startuml classes - extension
+@startuml class - extension
 skinparam linetype polyline
 
-title Diagramme de classes - logdensitytool (extension frontend)
+title Class Diagrams - logdensitytool (extension frontend)
 
 class vscode.TreeItem {
   +label: str
@@ -64,7 +64,7 @@ package logdensitytool {
                     +changeToken(token)
 
                 }
-                class hfApiModel 
+                class huggingFaceApiModel
                 class ollamaApiModel
 
                 apiModel <|-- hfApiModel
@@ -76,20 +76,20 @@ package logdensitytool {
                     +extractLines(text, requiredAttributes, attributesToComment, commentString)
                 }
                 class standardResponse 
-                class regexJavaResponse
-                class JSONResponseHandler
+                class regexResponse
+                class jsonResponse
 
                 response <|-- standardResponse 
-                response <|-- regexJavaResponse
-                response <|-- JSONResponseHandler
+                response <|-- regexResponse
+                response <|-- jsonResponse
             }
-            class factory {
+            class factoryService {
                 +createApiModel(apiId, url, port, defaultModel, defaultToken)
                 +createResponse(responseId)
             }
 
-            response <-- factory
-            apiModel <-- factory
+            response <-- factoryService
+            apiModel <-- factoryService
         }
 
         package utils {
@@ -170,7 +170,7 @@ package logdensitytool {
     extension -u-> runModelService
     extension -u-> gitHelper
     extension -u-> providers
-    extension -u-> factory
+    extension -u-> factoryService
     extension -u-> modelTools
 
     src.services.apiModel -u-> api

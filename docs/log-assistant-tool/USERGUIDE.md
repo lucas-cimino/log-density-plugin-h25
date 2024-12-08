@@ -1,3 +1,5 @@
+<!-- markdownlint-disable MD033 MD045 -->
+
 # Userguide to the Log Assistant Tool
 
 ## Table of Contents
@@ -39,7 +41,7 @@ Make sure you have followed the installation guide to install the extension.
 
 ### 4.2 Choosing a Model
 
-- The service will automatically start the download of the default model that is define in [model_config.js](logdensitytool/src/model_config.js).
+- The service will automatically start the download of the default model that is define in [model_config.js](../../logdensitytool/src/model_config.js).
 - If you want to use another model, you can do so by using the command `Log Advice Generator: Change Model ID` and entering the model ID.
 
 <img src="../resources/userGuide/change_model_id.png" width="50%">
@@ -51,14 +53,12 @@ Make sure you have followed the installation guide to install the extension.
 
 <img src="../resources/userGuide/change_token.png" width="50%">
 
-
 ### 4.4 Generating Log Advice
 
 - To generate log advice, put your cursor on the line of code where you want to get advice and use the command `Log Advice Generator: Generate Log Advice`.
   - There is two way to activate this command :
     - `Ctrl+Shift+P` (or `Cmd+Shift+P` on macOS) or `F1`, type `Log Advice Generator: Generate Log Advice`
     - Right click on the line of code and select `Generate Log Advice`
-
 
 <img src="../resources/userGuide/right-click-generate_log_advice.png" width="50%">
 

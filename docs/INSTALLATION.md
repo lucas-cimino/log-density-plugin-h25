@@ -1,3 +1,5 @@
+<!-- markdownlint-disable MD029 -->
+
 # Installation
 
 ## Prerequisites
@@ -51,4 +53,3 @@ To run the unit and integration tests:
    
    pytest services/service_model_creation
 ```
-

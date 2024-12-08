@@ -1,0 +1,62 @@
+@startuml ds - POST 8080 create
+title Sequence Diagram POST 8080/create - Create an AI Model
+skinparam style strictuml
+
+participant "app:FastAPI" as app
+participant ":model_router" as model_router
+participant JavaProject
+participant ":model_service" as model_service
+participant ":os" as os
+participant ":git.Repo" as github
+note left of github
+    GitPython module
+    for interacting with
+    git repositories.
+end note
+participant ":subprocess" as subprocess
+note left of subprocess
+    Module for interacting
+    with the operating system
+    to run command lines and
+    interact with input and
+    output values.
+end note
+participant "services_training_data\n:Shared Volume" as shared_volume
+note left of shared_volume
+    Shared volume accessible by
+    //PFE/services/service_model_creation//
+    and //PFE/services/service_ai_analysis//.
+end note
+
+-> app : POST 8080/create(JSON body JavaProject {github_url})
+
+app -> model_router : create_model_req(github_url)
+
+model_router -> JavaProject : check_url(github_url)
+alt github_url is empty
+    JavaProject --> model_router : Status code 422: The URL to the\nGitHub repository must not be empty.
+else
+    JavaProject --> model_router : github_url
+    model_router -> model_service : create_model(github_url)
+
+    model_service -> model_service : Extract //project_name// from github_url\nSet //output_dir// = "/host_folder" + //project_name// + "_project"
+    model_service -> os : makedirs(output_dir)
+    model_service -> model_service : Set //project_path// = //output_dir// + //project_name//
+
+    model_service -> os : path.exists(//project_path//)
+    alt Project does not exist yet
+        model_service -> github : Repo.clone_from(url, project_path)
+        github -> shared_volume : Store the project in //project_path//
+
+        model_service -> subprocess : Run commands to initiate the AI model creation
+        subprocess -> shared_volume : Store the AI model\nin //project_path//
+
+        model_service --> model_router : Confirmation message for model creation
+    else
+        model_service --> model_router : Message indicating that the code repository already exists
+    end
+end
+
+model_router --> app : Message
+<-- app : Message
+@enduml

@@ -1,44 +1,45 @@
-@startuml
-title Diagramme de séquence - Ajouter des fichiers pour analyse dans l'IDE de Visual Studio Code\nVue javaFiles
+@startuml ds - add files
+title Sequence Diagram - Add Files for Analysis in Visual Studio Code IDE\nJavaFiles View
 skinparam style strictuml
 
 actor User
-participant "Icône d'ajout dans\njavaFiles" as CommandPalette
+participant "Add Icon in\nJavaFiles" as CommandPalette
 participant ":JavaFileProvider" as JavaFileProvider
 participant ":AnalyzeFileProvider" as AnalyzeFileProvider
 
-User -> CommandPalette : Active "javaFileProvider.addToSendList"
-CommandPalette -> JavaFileProvider : Exécute la commande \n//javaFileProvider.addToSendList(item)//
+User -> CommandPalette : Activates "javaFileProvider.addToSendList"
+CommandPalette -> JavaFileProvider : Executes the command \n//javaFileProvider.addToSendList(item)//
 
 JavaFileProvider -> JavaFileProvider : javaItems = collectJavaFiles(item.ui.fsPath)
 
-alt item est une instance de Directory
-    JavaFileProvider -> JavaFileProvider : collectJavaFiles(item.uri) récursivement
+alt item is an instance of Directory
+    JavaFileProvider -> JavaFileProvider : collectJavaFiles(item.uri) recursively
 
     JavaFileProvider -> "javaFiles\n:JavaItem[]" as javaFiles **
 
 participant "itemsMap\n:Map<filepath, JavaItem>" as itemsMap
 participant "analyzeList\n:Map<filepath, JavaItem>" as analyzeList
 
-    loop Pour chaque fichier Java dans le dossier
-        JavaFileProvider -> JavaFileProvider : Lire le contenu du fichier
+    loop For each Java file in the folder
+        JavaFileProvider -> JavaFileProvider : Read the file content
         JavaFileProvider -> AnalyzeFileProvider: addFileToAnalyze(javaItem)
     end
-else item est une instance de File avec l'extension .java
+else item is an instance of File with the .java extension
     JavaFileProvider -> itemsMap : javaItem = get(javaItem.filepath)
     JavaFileProvider -> javaFiles : push(javaItem)
 end
 
-loop Pour chaque javaItem dans JavaItems
+loop For each javaItem in JavaItems
     JavaFileProvider -> AnalyzeFileProvider : addFileToAnalyze(javaItem)
 
     JavaFileProvider -> analyzeList : has(javaItem.filePath)
-    alt Si analyzeListe contient javaItem
+    alt If analyzeList contains javaItem
         JavaFileProvider -> analyzeList : set(javaItem.filepath, javaItem)
     end
 end
 
 JavaFileProvider -> JavaFileProvider: refresh()
 
-<-- JavaFileProvider : La vue analyzeFilesView se met à pour afficher les fichiers ajoutés
+<-- JavaFileProvider : The analyzeFilesView updates to display the added files
 @enduml
+

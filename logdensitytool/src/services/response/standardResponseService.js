@@ -1,4 +1,5 @@
-const Response = require("./response")
+/* eslint-disable no-unused-vars */
+const Response = require("./responseService")
 
 class StandardResponse extends Response {
 

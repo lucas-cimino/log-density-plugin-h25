@@ -1,5 +1,5 @@
-@startuml
-title Diagramme de séquence POST 8081/analyzeProject - Analyser le contenu de plusieurs fichiers Java
+@startuml ds - POST 8081 analyzeProject
+title Sequence Diagram POST 8081/analyzeProject - Analyze the content of multiple Java files
 skinparam style strictuml
 
 participant "app:FastAPI" as app
@@ -9,30 +9,30 @@ participant ":run_model" as run_model
 participant ":os" as os
 
 note left of shared_volume
-    Volume partagé accessible à
+    Shared volume accessible to
     //PFE/services/service_model_creation//
-    et à //PFE/services/service_ai_analysis//.
+    and to //PFE/services/service_ai_analysis//.
 end note
 
 -> app : POST 8081/analyzeProject(\n   JSON body ProjectAnalysis {\n      gitUrl,\n      files\n   }\n)
 app -> analysis_router : predict_project_req({url, files})
 analysis_router -> analysis_service : analyze_project()
 
-analysis_service -> analysis_service : //project_name// extrait de github_url\n//output_dir// = "/dossier_host" + //project_name// + "_project"
+analysis_service -> analysis_service : //project_name// extracted from github_url\n//output_dir// = "/host_folder" + //project_name// + "_project"
 analysis_service -> os : makedirs(output_dir)
 analysis_service -> analysis_service : //project_path// = //output_dir// + //project_name//
 
-analysis_service -> "results:[]" as results **: Crée une liste vide
+analysis_service -> "results:[]" as results **: Create an empty list
 
-loop Pour chaque file dans files
-    analysis_service -> "tmp:tempfile" as tmp ** : NamedTemporaryFile\n(crée un fichier temporaire)
+loop For each file in files
+    analysis_service -> "tmp:tempfile" as tmp ** : NamedTemporaryFile\n(create a temporary file)
 
     analysis_service -> tmp : writeFile(file.content)
 
     analysis_service -> analysis_service : //filepath// = //output_dir// + //tmp.name//
 
     analysis_service -> run_model : predict(//project_path//, //filepath//)
-    run_model -> shared_volume : Utilise //project_path// et //filepath// pour accéder\nau modèle AI et analyser le contenu du fichier.
+    run_model -> shared_volume : Uses //project_path// and //filepath// to access\n the AI model and analyze the file content.
 
     shared_volume --> run_model : result {density, blocks, predictedDensity}
     run_model --> analysis_service : prediction_result = result

@@ -1,0 +1,83 @@
+@startuml ds - generate log advice
+
+actor User
+participant "VSCode" as VS
+participant "Extension" as EX
+participant "Factory" as FA
+participant "ApiModelService" as AM
+participant "ResponseService" as RS
+participant "StandardResponse" as SR
+participant "File System (FS)" as FS
+participant "LLM Service" as LLM
+
+User -> VS: Right-click -> "Generate Log Advice"
+VS -> EX: Command triggered: Generate Log Advice
+
+note right of EX: Initialization (once)
+EX -> EX: load model_config.js
+EX -> FA: createApiModel(api_id, url, port, default_model, default_token)
+FA -> FA: switch(api_id)
+FA -> AM: return selected ApiModel instance
+FA -> EX: return ApiModel instance
+EX -> FA: createResponse(response_id)
+FA -> FA: switch(response_id)
+FA -> RS: return chosen Response instance
+FA -> EX: return Response instance
+
+note right of EX: If model not present:\nOllama downloads it\nAM.generate() unavailable until ready
+
+EX -> VS: getSurroundingMethodText()
+VS --> EX: selectedText
+
+EX -> FS: readFile(prompt_file)
+FS --> EX: prompt content
+
+EX -> EX: extractAttributesFromPrompt(system_prompt, attributes_to_comment)
+note right of EX: Find attribute bewteen {{...}} in prompt
+
+EX -> EX: buildPrompt(selectedText, system_prompt, injection_variable)
+note right of EX: inject vscode content in prompt where injection_variable is found
+
+loop while (linesToInsert.length === 0)
+    EX -> AM: generate(modelId, prompt)
+    AM -> LLM: POST /api/generate
+    LLM --> AM: raw LLM response text
+    AM --> EX: return response text
+
+    EX -> RS: if attributes.length > 0\nextractLines(responseText, attributes,...)
+    note right of RS: Parse response using chosen handler
+    RS --> EX: lines or empty
+    
+    opt if no attributes
+        EX -> FA: createResponse(StandardResponse.responseId)
+        FA -> SR: return StandardResponse instance
+        SR -> EX: extractLines(responseText,...)
+        SR --> EX: lines or empty
+    end
+end
+
+EX -> VS: Insert extracted lines into editor
+
+VS -> User: "Log advice generated. Apply changes? (Yes/No)"
+User --> VS: User choice (Yes/No)
+
+alt User chooses No
+VS -> EX: remove inserted lines
+else User chooses Yes
+VS -> EX: keep inserted lines
+end
+
+EX -> User: Operation complete
+
+@enduml
+
+
+
+
+
+
+
+
+
+
+

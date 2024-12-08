@@ -20,7 +20,7 @@ Otherwise, you can use the [App](#app)
     3. Open the instance
     4. Follow the Ollama GPU guide
     5. Enable Ubuntu wsl integration
-    ![wsl_integration](./resources//wsl_integration.png)
+    ![wsl_integration](../resources//wsl_integration.png)
 
 Ollama Docker should use the your GPU if compatible
 

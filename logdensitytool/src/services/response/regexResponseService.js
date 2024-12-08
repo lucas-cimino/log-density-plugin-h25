@@ -1,6 +1,6 @@
-const Response = require("./response");
+const Response = require("./responseService");
 
-class RegexJavaResponse extends Response {
+class RegexResponse extends Response {
   constructor() {
     super();
   }
@@ -57,4 +57,4 @@ class RegexJavaResponse extends Response {
   }
 }
 
-module.exports = RegexJavaResponse;
+module.exports = RegexResponse;

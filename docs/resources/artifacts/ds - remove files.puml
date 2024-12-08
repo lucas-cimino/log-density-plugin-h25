@@ -1,0 +1,27 @@
+@startuml ds - remove files
+title Sequence Diagram - Remove one or multiple files for analysis in Visual Studio Code IDE\nView: analyzeFilesView
+skinparam style strictuml
+
+actor User
+participant "Delete file icon in\nanalyzeFilesView" as deleteIcon
+participant "Delete all files icon in\nanalyzeFilesView" as deleteAllIcon
+participant ":AnalyzeFileProvider" as AnalyzeFileProvider
+participant "analyzeList\n:Map<filepath, JavaItem>" as analyzeList
+
+User -> deleteIcon : Activates "analyzeFileProvider.removeFile"
+deleteIcon -> AnalyzeFileProvider: Executes the command \n//analyzeFileProvider.removeFile(filePath)//
+AnalyzeFileProvider -> AnalyzeFileProvider: removeFileFromAnalyze(filePath)
+
+AnalyzeFileProvider -> analyzeList : has(filePath)
+alt If analyzeList contains filePath
+    AnalyzeFileProvider -> analyzeList: delete(filePath)
+    AnalyzeFileProvider -> AnalyzeFileProvider: refresh()
+end
+<-- AnalyzeFileProvider : The analyzeFilesView updates and removes the deleted file from the view
+
+User -> deleteAllIcon : Activates "analyzeFileProvider.removeAllFiles"
+deleteAllIcon -> AnalyzeFileProvider: Executes the command \n//analyzeFileProvider.removeAllFiles()//
+AnalyzeFileProvider -> AnalyzeFileProvider : removeAllFiles()
+AnalyzeFileProvider -> analyzeList : clear()
+<-- AnalyzeFileProvider : The analyzeFilesView updates and clears the deleted files from the view
+@enduml

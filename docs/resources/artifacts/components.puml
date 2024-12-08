@@ -1,0 +1,44 @@
+@startuml components
+
+title Component Diagram
+
+actor "Development Team" as team
+
+node "Developer's Machine" as machine {
+    node "Visual Studio Code" as IDE {
+        package "Java Project" as project {
+            file ".java Files" as files
+        }
+
+        component "Log Density Tool" as plugin
+    }
+}
+
+cloud "Server" as server {
+    node "Analysis Service" as serviceB
+
+    node "Model Generator Service" as serviceA
+
+    node "Ollama Service" as serviceOllama
+
+    database "services_training_data" <<Shared Volume>> as sharedVolume {
+        file "AI Model" as model
+    }
+}
+
+team -u-> plugin: "Requests the creation of an AI model by\nsending the GitHub URL of a Java project\n\nRequests an analysis of Java files\n\nRequests log generation\nfor a Java file"
+team -u-> project: "Makes modifications"
+
+plugin -d-> serviceA: "Sends the analyzed Java project"
+serviceA -u-> sharedVolume: "Creates an AI model"
+
+sharedVolume -r-> serviceB: "Analysis results"
+serviceB --> sharedVolume: "Analyzes Java files"
+
+plugin --> serviceB: "Sends the content of the Java file to be analyzed"
+serviceB --> plugin: "Log density percentage of a Java file"
+
+plugin -d-> serviceOllama: "Requests log generation"
+serviceOllama -l-> files: "Adds the generated logs\nto the Java file"
+
+@enduml

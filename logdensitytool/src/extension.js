@@ -1,19 +1,19 @@
-const StandardResponse = require("./services/response/standardResponse");
+const StandardResponse = require("./services/response/standardResponseService");
 const vscode = require('vscode');
 const { getGitRemoteUrl } = require('./utils/gitHelper'); // Import the required function
 const LogDensityCodeLensProvider = require('./providers/logDensityCodeLensProvider');
-const { registerOpenTabsSideBarProvider, OpenTabsSidebarProvider } = require('./providers/openTabsSidebarProvider');
+const { registerOpenTabsSideBarProvider } = require('./providers/openTabsSidebarProvider');
 const { trainModel } = require('./services/trainModelService');
 const { runModel } = require('./services/runModelService');
-const { registerJavaFileProvider, JavaFileProvider } = require('./providers/javaFileProvider');
+const { registerJavaFileProvider } = require('./providers/javaFileProvider');
 const { registerAnalyzeFileProvider } = require('./providers/analyzeFileProvider');
-const { createApiModel, createResponse } = require('./services/factory');
+const { createApiModel, createResponse } = require('./services/factoryService');
 const { configuration } = require('./model_config');
 const { readFile } = require("./utils/fileReader");
 const { buildPrompt, getSurroundingMethodText, extractAttributesFromPrompt } = require("./utils/modelTools")
 const path = require('path');
 
-const { api_id, url, port, prompt_file, default_model, default_token, response_id, attributes_to_comment, comment_string, injection_variable } = configuration;
+const { api_id, url, port, prompt_file, default_model, default_token, llm_temperature, llm_max_token, response_id, attributes_to_comment, comment_string, injection_variable } = configuration;
 
 let trained = false;
 let remoteUrl; // Store the remote URL if needed
@@ -74,28 +74,29 @@ async function generateLogAdvice() {
             // Call your LLM service
             const model = await apiModelService.getModel();
 
+            // Get the current directory of the script
+            const projectBasePath = path.resolve(__dirname, "..", "..");
+            let system_prompt = await readFile(path.join(projectBasePath, "prompt", prompt_file)) // Extract prompt from txt file
+
+            let attributes = []
+            // Find and extract attributes from prompt {{json}}
+            if (system_prompt.includes("{{") && system_prompt.includes("}}")) {
+                attributes = extractAttributesFromPrompt(system_prompt, attributes_to_comment) // Extract attributes from prompt {{json}}
+                system_prompt = system_prompt.replace("{{", "{");
+                system_prompt = system_prompt.replace("}}", "}");
+            }
+            
+            // Build Prompt
+            const builtPrompt = buildPrompt(selectedText, system_prompt, injection_variable)
+            if (builtPrompt != null) {
+                prompt = builtPrompt
+            }
+
             let linesToInsert = [];
             while (linesToInsert.length === 0) {
-                // Get the current directory of the script
-                const projectBasePath = path.resolve(__dirname, "..", "..");
-                let system_prompt = await readFile(path.join(projectBasePath, "prompt", prompt_file)) // Extract prompt from txt file
-
-                let attributes = []
-                // Find and extract attributes from prompt {{json}}
-                if (system_prompt.includes("{{") && system_prompt.includes("}}")) {
-                    attributes = extractAttributesFromPrompt(system_prompt, attributes_to_comment) // Extract attributes from prompt {{json}}
-                    system_prompt = system_prompt.replace("{{", "{");
-                    system_prompt = system_prompt.replace("}}", "}");
-                }
                 
-                // Build Prompt
-                const builtPrompt = buildPrompt(selectedText, system_prompt, injection_variable)
-                if (builtPrompt != null) {
-                    prompt = builtPrompt
-                }
-              
                 console.log("Generating log advice...");
-                const modelResponse = await apiModelService.generate(model, null, prompt, null, null);
+                const modelResponse = await apiModelService.generate(model, null, prompt, llm_temperature, llm_max_token);
                 if (attributes.length > 0) {
                     linesToInsert = reponseService.extractLines(modelResponse, attributes, attributes_to_comment, comment_string);
                 } else {
@@ -152,6 +153,7 @@ async function generateLogAdvice() {
 
 function activate(context) {
     initialize();
+    // eslint-disable-next-line no-unused-vars
     const workspaceRoot = vscode.workspace.rootPath;
     
     // Register Codelens
@@ -208,6 +210,7 @@ function activate(context) {
         }
     });
 
+    /* Commented functionnality, missing functions getAllJavaFiles() and analyzeProjectFiles()
     const analyzeNewJavaFilesCommand = vscode.commands.registerCommand('extension.analyzeNewJavaFiles', async () => {
         const allFiles = await getAllJavaFiles();
         const results = await analyzeProjectFiles(allFiles);
@@ -216,6 +219,7 @@ function activate(context) {
             vscode.window.showInformationMessage('New Java files analysis complete. Check the console for details.');
         }
     });
+    */
 
     let generateLog = vscode.commands.registerCommand('log-advice-generator.generateLogAdvice', generateLogAdvice);
 
@@ -253,7 +257,7 @@ function activate(context) {
         if (token) {
             console.log(`Changing token`)
             const response = await apiModelService.changeToken(token);
-            console.log(JSON.stringify(response, null, 2));
+            //console.log(JSON.stringify(response, null, 2));
             if (response.completed == true) {
                 vscode.window.showInformationMessage('Token Change has been successfull')
             } else {
@@ -266,7 +270,7 @@ function activate(context) {
 
     let getModelInfo = vscode.commands.registerCommand('log-advice-generator.modelInfo', async () => {
         const response = await apiModelService.info();
-        console.log(JSON.stringify(response.model, null))
+        //console.log(JSON.stringify(response.model, null))
         vscode.window.showInformationMessage("Model : " + JSON.stringify(response.model, null))
     });
 

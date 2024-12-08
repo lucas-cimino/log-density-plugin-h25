@@ -1,4 +1,4 @@
-@startuml
+@startuml ds - POST 8081 predict
 title Diagramme de séquence POST 8081/predict - Analyser le contenu d'un fichier Java
 skinparam style strictuml
 

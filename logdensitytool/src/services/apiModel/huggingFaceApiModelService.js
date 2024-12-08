@@ -1,11 +1,10 @@
 const { post, get } = require('../../utils/api');
-const ApiModel = require('./apiModel');
+const ApiModel = require('./apiModelService');
 
-class HfApiModel extends ApiModel {
+class HuggingFaceApiModel extends ApiModel {
 
   constructor(url, port, initialModel, initialToken) {
     super(url, port, initialModel, initialToken);
-    this.init(initialModel, initialToken)
   }
 
   /**
@@ -27,16 +26,20 @@ class HfApiModel extends ApiModel {
    */
   async generate(model, system, prompt, temperature, max_token) {
 
-    if (!this.ready) {
-      throw new Error(`${this.constructor.name} is not ready yet. Please wait for initialization to complete.`);
-    }
+    this.checkReady()
 
     try {
+      let usedTokens = 128 // (Default: 128, -1 = infinite generation, -2 = fill context)
+      if (max_token !=null && max_token >= -2) usedTokens = max_token
+
+      let usedTemp = 0.8 // (Default: 0.8) value between 0 and 1. Increasing the temperature will make the model answer more creatively. 
+      if (temperature !=null && temperature >= 0 && temperature <= 1 ) usedTemp = temperature
+      
       const response = await post(this.url, this.port, '/predict', {
         model: model, // Not implemented
         prompt: this.buildPrompt(system, prompt), 
-        max_new_tokens: max_token, 
-        temperature: temperature // Not implemented
+        max_new_tokens: usedTokens, 
+        temperature: usedTemp // Not implemented
       }) 
       return response.data.content;
     } catch (error) {
@@ -46,12 +49,12 @@ class HfApiModel extends ApiModel {
 
   /**
    * Changes the model being used.
-   * @param {string} modelName - The name of the new model.
+   * @param {string} modelId - The name of the new model.
    * @returns {completed: boolean, model: string} completed, true if model changed, false if not, model, indicate the model configured
    */
-  async changeModel(modelName) {
-    const response = await post(this.url, this.port, '/change_model', {hf_model_id: modelName})
-    this.model = modelName
+  async changeModel(modelId) {
+    const response = await post(this.url, this.port, '/change_model', {hf_model_id: modelId})
+    this.model = modelId
     return {completed: response.data.completed, model: response.data.model_name}
   }
   
@@ -87,21 +90,9 @@ class HfApiModel extends ApiModel {
     return {completed: response.data.completed, message: ""}
   }
 
-  /**
-   * 
-   * @param {string} model - Model used for initalisation
-   * @param {string} token - Token used for initalisation
-   */
-  async init(model, token) {
-    await this.changeModel(model);
-    await this.changeToken(token);
-    this.ready = true
-    console.log(`${this.constructor.name} initialization complete.`)
-  }
-
   buildPrompt(context, prompt) {
     return `[INST]CONTEXT: ${context}\n\nINPUT: ${prompt} [/INTS]`
   }
 }
 
-module.exports = HfApiModel;
+module.exports = HuggingFaceApiModel;

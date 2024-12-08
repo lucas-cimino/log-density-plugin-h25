@@ -1,7 +1,7 @@
-@startuml classes - services
+@startuml class - services
 skinparam linetype polyline
 
-title Diagramme de classes - Services (serveur backend)
+title Class Diagrams - Services (serveur backend)
 
 package services {
     package service_ai_analysis {

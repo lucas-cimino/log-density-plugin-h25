@@ -1,6 +1,6 @@
-const Response = require("./response")
+const Response = require("./responseService")
 
-class JSONResponseHandler extends Response {
+class JsonResponse extends Response {
 
   
 
@@ -76,4 +76,4 @@ class JSONResponseHandler extends Response {
   }
 }
 
-module.exports = JSONResponseHandler;
+module.exports = JsonResponse;

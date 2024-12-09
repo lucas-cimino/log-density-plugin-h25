@@ -1,6 +1,5 @@
 # log-density-plugin
 
-[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Documentation](https://img.shields.io/badge/docs-online-brightgreen)](/docs)
 
 ## Table of Contents
@@ -41,6 +40,10 @@ The full documentation, including installation and usage instructions, can be fo
 
 - [Installation Guide](./docs/INSTALLATION.md)
 - [Usage Instructions](./docs/USAGE.md)
+
+Here is a short video that shows how to use the log assistant tool:
+
+[![demo-video](https://img.youtube.com/vi/2E8YjmcCWac/0.jpg)](https://www.youtube.com/watch?v=2E8YjmcCWac)
 
 ## Contributing
 

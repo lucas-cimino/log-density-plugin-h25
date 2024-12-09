@@ -1,4 +1,4 @@
-# Documentation for log-density-plugin (*name still TBD*)
+# Documentation for log-density-plugin
 
 [[Return]](../README.md)
 

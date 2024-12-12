@@ -13,7 +13,8 @@
 ## Setting Up the Log Density Backend
 
 1. Open terminal in project root
-2. Run this command :
+2. To run on GPU, uncomment the GPU section in [docker-compose.yml](../services/docker-compose.yml)
+3. Run this command :
 
 ```bash
    docker-compose -f ./services/docker-compose.yml up --build

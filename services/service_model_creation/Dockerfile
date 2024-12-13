@@ -43,9 +43,14 @@ RUN pip install --no-cache-dir -r /app/requirements.txt
 
 # Install R
 WORKDIR /r_install
-COPY ./service_model_creation/install_R.sh /r_install
-RUN chmod a+x /r_install/install_R.sh
-RUN /r_install/install_R.sh
+#COPY ./service_model_creation/install_R.sh /r_install
+#RUN chmod a+x /r_install/install_R.sh
+#RUN /r_install/install_R.sh
+RUN apt update -qq
+RUN apt install --no-install-recommends -y software-properties-common dirmngr
+RUN wget -qO- https://cloud.r-project.org/bin/linux/ubuntu/marutter_pubkey.asc | tee -a /etc/apt/trusted.gpg.d/cran_ubuntu_key.asc
+RUN add-apt-repository "deb https://cloud.r-project.org/bin/linux/ubuntu $(lsb_release -cs)-cran40/"
+RUN apt install --no-install-recommends -y r-base
 
 # copy over JRE
 WORKDIR /javaruntime

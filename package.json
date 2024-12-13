@@ -1,0 +1,13 @@
+{
+  "name": "log-density-plugin",
+  "version": "0.1.0",
+  "workspaces": [
+    "logdensitytool"
+  ],
+  "scripts": {
+    "start":"code --extensionDevelopmentPath=%CD%/logdensitytool",
+    "test-ai-analysis":"pytest services/service_ai_analysis",
+    "test-model-creation":"pytest services/service_model_creation",
+    "build-service-density":"docker-compose -f ./services/docker-compose.yml up --build"
+  }
+}

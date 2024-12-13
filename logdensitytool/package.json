@@ -5,12 +5,13 @@
   "description": "This extension enhances your coding workflow by automatically measuring and reporting the log density of files within a repository.",
   "version": "0.0.1",
   "engines": {
-    "vscode": "^1.91.0"
+    "vscode": "^1.93.1"
   },
   "categories": [
     "Other"
   ],
-  "activationEvents": [""],
+  "activationEvents": [
+    "*"],
   "main": "./src/extension.js",
   "contributes": {
     "commands": [
@@ -61,6 +62,26 @@
           "light": "media/icons/refresh.svg",
           "dark": "media/icons/refresh-light.svg"
         }
+      },
+      {
+        "command": "log-advice-generator.generateLogAdvice",
+        "title": "Generate Log Advice",
+        "category": "Log Advice Generator"
+      },
+      {
+        "command": "log-advice-generator.changeModelId",
+        "title": "Change Model ID",
+        "category": "Log Advice Generator"
+      },
+      {
+        "command": "log-advice-generator.changeToken",
+        "title": "Change Token",
+        "category": "Log Advice Generator"
+      },
+      {
+        "command": "log-advice-generator.modelInfo",
+        "title": "Get Model Info",
+        "category": "Log Advice Generator"
       }
     ],
     "menus": {
@@ -68,6 +89,10 @@
         {
           "when": "resourceLangId == java",
           "command": "extension.analyzeLogDensity",
+          "group": "navigation"
+        },
+        {
+          "command": "log-advice-generator.generateLogAdvice",
           "group": "navigation"
         }
       ],
@@ -158,6 +183,7 @@
   },
   "dependencies": {
     "axios": "^1.7.2",
-    "node-fetch": "^3.3.2"
+    "node-fetch": "^3.3.2",
+    "circular-json": "^0.5.9"
   }
 }

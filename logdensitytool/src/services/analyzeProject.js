@@ -1,6 +1,4 @@
-const vscode = require('vscode');
 const axios = require('axios');
-const fs = require('fs'); 
 
 // Function to send files for analysis
 async function analyzeFiles(remoteUrl, fileContents) {

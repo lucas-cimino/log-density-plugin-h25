@@ -1,8 +1,27 @@
-# Log Density Analyzer for Java
+# log-density-plugin
 
-## Overview
+[![Documentation](https://img.shields.io/badge/docs-online-brightgreen)](/docs)
 
-The Log Density Analyzer is a Visual Studio Code extension that leverages an AI model trained on open-source Java projects. It provides functionalities to predict and check the log density of `.java` files and projects, helping developers understand and optimize their logging practices.
+## Table of Contents
+
+- [log-density-plugin](#log-density-plugin)
+  - [Table of Contents](#table-of-contents)
+  - [About](#about)
+  - [Features](#features)
+  - [Documentation](#documentation)
+  - [Contributing](#contributing)
+  - [License](#license)
+  - [Quick Links](#quick-links)
+
+## About
+
+This project is about a Visual Studio Code extension that groups functionalities about logging method in Java Project. It uses a AI model trained on open-source Java projects to predict and check the log density of `.java` files and projects, helping developers understand and optimize their logging practices. It also offers the possibility to generate log advices with a large language model at line in code, for the function / method in which you are. Basics functionalities are:
+
+- Model Training
+- Log Density Analysis
+- Generate Log Advice
+
+For more details, see the [documentation](./docs/README.md).
 
 ## Features
 
@@ -10,41 +29,34 @@ The Log Density Analyzer is a Visual Studio Code extension that leverages an AI 
 - **Log Density Analysis**: Analyze individual Java files to determine the log density in each block of code.
 - **Batch Log Density Prediction**: Obtain predicted and current log densities for multiple Java files at once.
 
-## Installation
+- **Generate Log Advice**: Generate log advices with a large language model at line in code, for the function / method in which you are.
+- **Get Model Info**: Get current configured model.
+- **Change Model ID**: Change the configured model and download if not available locally by givving a valid model ID.
+- **Change Token**: Change and set a new token (Only used for HuggingFace).
 
-### Prerequisites
+## Documentation
 
-- Docker
-- Node.js and npm
+The full documentation, including installation and usage instructions, can be found in the [`/docs`](./docs/README.md) directory. Key sections:
 
-### Setting Up the Backend
+- [Installation Guide](./docs/INSTALLATION.md)
+- [Usage Instructions](./docs/USAGE.md)
 
-1. Clone the repository and navigate to the `services` directory.
-2. Make sure that services/service_model_creation/install_R.sh and services/preprocess_project/gradlew are saved in LF format and not CRLF (as git might have converted them to, you can do the conversion by visiting the file and clicking CRLF at the bottom right of the VSCode window on the status bar)
-2. Run the following command to build and start the backend services using Docker:
-   ```bash
-   docker compose up --build
-   ```
-   
-### Setting Up the Frontend
+Here is a short video that shows how to use the log assistant tool:
 
-1. Navigate to the `logdensitytool` directory.
-2. Install the necessary dependencies:
-   ```bash
-   npm install
-   ```
-3. Make sure that your vs code IDE is the same version as the one specified in the package.json file. Your VS Code version can be obtained by clicking on **Help** > **About**.
-## Usage
-After setting up both the backend and frontend, activate the VS Code extension within the Visual 
-Studio Code editor to start analyzing your Java projects.
-
-## Testing
-To run the unit and integration tests:
-1. Change directory to services/service_ai_analysis or services/service_model_creation.
-2. Use the following command:
-   ```bash
-   pytest
-   ```
+[![demo-video](https://img.youtube.com/vi/2E8YjmcCWac/0.jpg)](https://www.youtube.com/watch?v=2E8YjmcCWac)
 
 ## Contributing
-Contributions are welcome! Please read our contributing (CONTRIBUTING.md) guidelines for details on our code of conduct and the process for submitting pull requests.
+
+Contributions are welcome! To get started:
+
+1. Read the [Contributing Guide](./docs/CONTRIBUTING.md).
+2. Check the open issues or suggest new features.
+
+## License
+
+This project is licensed under the [GNU General Public License v3.0](COPYING).
+
+## Quick Links
+
+- [Official Documentation](./docs/README.md)
+- [Report Issues](https://github.com/username/repo/issues)

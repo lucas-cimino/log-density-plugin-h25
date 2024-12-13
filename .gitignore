@@ -3,13 +3,19 @@
 
 # Ignore Gradle build output directory
 build
+bin
 
 # Ignore anything in open_source_java_projects
 open_source_java_projects/**
 
 **/__pycache__
 /logdensitytool/node_modules/
-services/training_data/*
+**/node_modules
+/services/training_data/*
+!.gitkeep
 
 # Ignore .idea
 .idea/
+.venv
+
+**.DS_Store

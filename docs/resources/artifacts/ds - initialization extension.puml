@@ -1,0 +1,71 @@
+@startuml ds - initialization extension
+title Sequence Diagram - Initialization of the LogDensityTool Extension
+skinparam style strictuml
+
+participant "extension" as extension
+note left of vscode
+The vscode module is used here to register
+and initialize views in the left sidebar
+of the Visual Studio Code IDE. It uses
+a Tree View to represent hierarchical
+elements. The IDs of the views are
+registered in the package.json file.
+end note
+note left of context
+The context module is a collection
+of utilities for vscode extensions.
+It can be used to access 
+context.subscriptions to add 
+Disposable instances, which are
+used to listen to events or
+commands registered in the 
+package.json file.
+end note
+
+-> extension : activate(context)
+
+extension -> "codeLensProvider\n:LogDensityCodeLensProvider" as codeLensProvider ** : new LogDensityCodeLensProvider()
+extension -> context : context.subscription.push(\n   Command extension.showLogDensityInfo\n   Command extension.analyzeNewJavaFiles\n   Event workspace.onDidOpenTextDocument\n   Event workspace.onDidChangeTextDocument\n)
+
+extension -> "openTabsSidebarProvider\n:OpenTabsSidebarProvider" as sidebar ** : registerOpenTabsSideBarProvider(context)
+
+participant ":vscode" as vscode
+participant "context\n:ExtensionContext" as context
+
+sidebar -> vscode : vscode.window.createTreeView(\n   'openTabsSidebarView',\n   { treeDataProvider: openTabsSidebarProvider }\n)
+sidebar -> context : context.subscription.push(\n   Command openTabsSidebarView.predictOpenTabs\n   Event workspace.onDidOpenTextDocument\n   Event workspace.onDidCloseTextDocument\n)
+
+extension -> "analyzeFileProvider\n:AnalyzeFileProvider" as analyze ** : registerAnalyzeFileProvider(context)
+analyze -> vscode : vscode.window.createTreeView(\n   'analyzeFilesView',\n   { treeDataProvider: analyzeFileProvider }\n)
+analyze -> context : context.subscription.push(\n   Command analyzeFileProvider.removeAllFiles\n   Command analyzeFileProvider.removeFile\n   Command analyzeFileProvider.sendForAnalysis\n)
+
+extension -> "javaFileProvider\n:JavaFileProvider" as provider ** : registerJavaFileProvider(context, analyzeFileProvider)
+provider -> vscode : vscode.window.createTreeView(\n   'javaFiles',\n   { treeDataProvider: javaFileProvider }\n)
+provider -> context : context.subscription.push(\n   Command javaFileProvider.addToSendList\n   Command javaFiles.refreshEntry)
+
+extension -> analyze : setJavaFileProvider(javaFileProvider)
+
+
+
+
+' Adding the new changeModel sequence at apiModel creation
+participant "apiModel" as apiModel
+participant "changeModel\n:ChangeModel" as changeModel
+participant "ollama\n:Ollama API" as ollama
+
+note right of apiModel
+The `initialize()` create the apiModel. At creation,
+the changeModel() function is used to ensure that the 
+default configured model is on the Ollama backend. 
+If not, it is downloaded and during that time, 
+the generate() function is not available.
+end note
+
+
+extension -> apiModel : initialize() -> create(apiModel)
+apiModel -> changeModel : changeModel(modelId)
+changeModel -> ollama : POST /api/pull\n{ model: modelId, stream: false }
+ollama -> changeModel : if missing, download model; otherwise no action
+changeModel -> apiModel : return response (success or no operation for generate())
+
+@enduml

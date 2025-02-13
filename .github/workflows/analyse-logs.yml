@@ -1,0 +1,29 @@
+name: Analyze Logs in PR
+
+on:
+  pull_request:
+    types: [opened, edited, synchronize]
+    branches:
+      - main
+      - develop
+
+jobs:
+  analyze-logs:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18.x'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Analyze logs in PR
+        run: node .github/scripts/analyze-logs.js
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

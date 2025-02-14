@@ -24,6 +24,6 @@ jobs:
         run: npm install
 
       - name: Analyze logs in PR
-        run: node .github/scripts/analyze-logs.js
+        run: node .logdensitytool\test\extension.test.js
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

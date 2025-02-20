@@ -51,6 +51,11 @@
         "icon": "media/icons/send-files.png"
       },
       {
+        "command": "analyzeFileProvider.improveLogs",
+        "title": "Send Selected Files for Analysis and improve logs",
+        "icon": "media/icons/improve-logs.svg"
+      },
+      {
         "command": "analyzeFileProvider.removeAllFiles",
         "title": "Remove All Files",
         "icon": "media/icons/remove.png"
@@ -103,6 +108,11 @@
           "group": "navigation"
         },
         {
+          "command": "analyzeFileProvider.improveLogs",
+          "when": "view == analyzeFilesView",
+          "group": "navigation"
+        },
+        {
           "when": "view == analyzeFilesView",
           "command": "analyzeFileProvider.removeAllFiles",
           "group": "navigation"
@@ -131,6 +141,11 @@
         },
         {
           "command": "analyzeFileProvider.sendForAnalysis",
+          "when": "view == analyzeFilesView",
+          "group": "navigation"
+        },
+        {
+          "command": "analyzeFileProvider.improveLogs",
           "when": "view == analyzeFilesView",
           "group": "navigation"
         },

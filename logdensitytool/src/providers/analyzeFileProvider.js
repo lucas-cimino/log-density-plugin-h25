@@ -2,6 +2,7 @@ const vscode = require('vscode');
 const path = require('path');
 const { analyzeFiles } = require('../services/analyzeProject');
 const { readFile } = require('../utils/fileReader');
+const { runModel } = require('../services/runModelService')
 
 class AnalyzeFileProvider {
     constructor() {
@@ -99,6 +100,26 @@ class AnalyzeFileProvider {
             vscode.window.showErrorMessage('Failed to send files for analysis: ' + error.message);
         }
     }
+
+    async sendBlocsToLLM() {
+        const results = await this.sendFilesForAnalysis();
+        const allBlocks = [];
+        //const filteredFiles = results.filter(f => f.density < f.predictedDensity);
+
+        for (let index = 0; index < results.length; index++) {
+            const element = results[index];
+            const fileContent = await readFile(element.url);
+            const result = await runModel(this.remoteUrl, fileContent);
+    
+            allBlocks.push({ fileName: element.url, fileContent: fileContent, blocks: result.blocks });
+        }
+        
+        console.log("All Blocks: " + JSON.stringify(allBlocks, null, 2));
+
+        // Appeller le LLM et voir ce qu'il raconte
+        
+        //console.log("Filtered files :" + filteredFiles);
+    }
 }
 
 function registerAnalyzeFileProvider(context) {
@@ -124,6 +145,12 @@ function registerAnalyzeFileProvider(context) {
         const results = await analyzeFileProvider.sendFilesForAnalysis();
         vscode.window.showInformationMessage('Files sent for analysis. Check the console for details.');
         console.log(results);
+    }));
+
+    context.subscriptions.push(vscode.commands.registerCommand('analyzeFileProvider.improveLogs', async () => {
+        const results = await analyzeFileProvider.sendBlocsToLLM();
+        vscode.window.showInformationMessage('Files sent for log improvements.');
+        //console.log(results);
     }));
     
     return analyzeFileProvider;  

@@ -51,8 +51,8 @@
         "icon": "media/icons/send-files.png"
       },
       {
-        "command": "analyzeFileProvider.improveLogs",
-        "title": "Send Selected Files for Analysis and improve logs",
+        "command": "analyzeFileProvider.analyzeAndAddMissingLogs",
+        "title": "Send Selected Files for Analysis and add missing logs",
         "icon": "media/icons/improve-logs.svg"
       },
       {
@@ -108,7 +108,7 @@
           "group": "navigation"
         },
         {
-          "command": "analyzeFileProvider.improveLogs",
+          "command": "analyzeFileProvider.analyzeAndAddMissingLogs",
           "when": "view == analyzeFilesView",
           "group": "navigation"
         },
@@ -145,7 +145,7 @@
           "group": "navigation"
         },
         {
-          "command": "analyzeFileProvider.improveLogs",
+          "command": "analyzeFileProvider.analyzeAndAddMissingLogs",
           "when": "view == analyzeFilesView",
           "group": "navigation"
         },

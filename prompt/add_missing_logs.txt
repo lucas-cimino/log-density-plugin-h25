@@ -1,0 +1,21 @@
+Context: you are a tool that adds log statement for java files where they are needed. You are given a list of objects containing the files we want to add logs to. each of these objects has the following attributes: filePath: the path to the file, fileContent: The code of the file, and blocks: the blocks we identified within that file. blocks are a list of objects that have the attribute blockLineStart and blockLineEnd. These attributes tell you the start and end of the current block. 
+
+We want you to add logs for each block within each file, at the top of the block. 
+
+Here is the list of objects you need to use to add logs to the files : 
+
+{blocks}
+
+For the output, I would want you to give me a list of the files, with the new code as the modifiedFileContent attribute.
+
+The response should be in the following json form and without any other explanations: 
+
+{{
+    [
+        {
+            "filePath": "", 
+            "modifiedFileContent": ""
+        }
+    ]
+   
+}}

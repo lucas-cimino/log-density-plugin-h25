@@ -15,6 +15,8 @@ const path = require('path');
 
 const { api_id, url, port, prompt_file, default_model, default_token, llm_temperature, llm_max_token, response_id, attributes_to_comment, comment_string, injection_variable } = configuration;
 
+const {initializeAdviceService, generateLogAdviceForDocument} = require('./services/logAdviceService');
+
 let trained = false;
 let remoteUrl; // Store the remote URL if needed
 let apiModelService;
@@ -25,6 +27,7 @@ const codeLensProvider = new LogDensityCodeLensProvider();
 function initialize() {
     apiModelService = createApiModel(api_id, url, port, default_model, default_token);
     reponseService = createResponse(response_id);
+    initializeAdviceService(apiModelService, reponseService,readFile, buildPrompt, getSurroundingMethodText, extractAttributesFromPrompt, StandardResponse, createResponse, configuration);
 }
 
 async function analyzeDocument(document) {
@@ -52,103 +55,24 @@ async function generateLogAdvice() {
         selectedText = document.getText(selection);
     }
 
-    selectedText = getSurroundingMethodText(document, cursorLine);
+    try {
+        await generateLogAdviceForDocument(document, cursorLine);
 
-    // Générer un prompt spécifique pour le modèle
-    let prompt = (
-        // Promt modifiable dans le backend dans un fichier config
-        "Context: Suggest 1 log (System.out.println()) to add to method the following JAVA functions, don't return the input, only the output: \n"
-        //+ "Please only add 2 to 5 lines of code to improve log messages to the following code: "
-        + selectedText
-    );
-
-    // Show loading progress window while waiting for the response
-    vscode.window.withProgress({
-        location: vscode.ProgressLocation.Notification,
-        title: "Generating Log Advice",
-        cancellable: false
-    }, async (progress) => {
-        progress.report({ message: "Contacting LLM..." });
-
-        try {
-            // Call your LLM service
-            const model = await apiModelService.getModel();
-
-            // Get the current directory of the script
-            const projectBasePath = path.resolve(__dirname, "..", "..");
-            let system_prompt = await readFile(path.join(projectBasePath, "prompt", prompt_file)) // Extract prompt from txt file
-
-            let attributes = []
-            // Find and extract attributes from prompt {{json}}
-            if (system_prompt.includes("{{") && system_prompt.includes("}}")) {
-                attributes = extractAttributesFromPrompt(system_prompt, attributes_to_comment) // Extract attributes from prompt {{json}}
-                system_prompt = system_prompt.replace("{{", "{");
-                system_prompt = system_prompt.replace("}}", "}");
-            }
-            
-            // Build Prompt
-            const builtPrompt = buildPrompt(selectedText, system_prompt, injection_variable)
-            if (builtPrompt != null) {
-                prompt = builtPrompt
-            }
-
-            let linesToInsert = [];
-            while (linesToInsert.length === 0) {
-                
-                console.log("Generating log advice...");
-                const modelResponse = await apiModelService.generate(model, null, prompt, llm_temperature, llm_max_token);
-                if (attributes.length > 0) {
-                    linesToInsert = reponseService.extractLines(modelResponse, attributes, attributes_to_comment, comment_string);
-                } else {
-                    const standardResponse = createResponse(StandardResponse.responseId)
-                    linesToInsert = standardResponse.extractLines(modelResponse, attributes, attributes_to_comment, comment_string);
-                }
-                
-            }
-
-            let cursorPosition = editor.selection.active;
-
-            // Detect indentation style based on the current line
-            const currentLineText = document.lineAt(cursorPosition.line).text;
-            const lineIndentMatch = currentLineText.match(/^\s*/); // Match leading whitespace (spaces or tabs)
-            const detectedIndent = lineIndentMatch ? lineIndentMatch[0] : ''; // Preserve tabs or spaces
-
-            const edit = new vscode.WorkspaceEdit();
-
-            for (let i = 0; i < linesToInsert.length; i++) {
-                let lineText = linesToInsert[i];
-
-                // Preserve the detected indentation for all lines after the first
-                const formattedLine = i > 0 ? detectedIndent + lineText : lineText;
-
-                // Insert the formatted line
-                edit.insert(document.uri, cursorPosition, formattedLine + '\n');
-            }
-
-            // Apply the edit
-            await vscode.workspace.applyEdit(edit);
-
-            const userResponse = await vscode.window.showQuickPick(
-                ["Yes", "No"],
-                {
-                    placeHolder: "Log advice generated. Do you want to apply the changes?",
-                    canPickMany: false
-                }
-            );
-
-            if (userResponse === "Yes") {
-                // Apply the changes permanently
-                vscode.window.showInformationMessage("Log advice applied.");
-            } else {
-                // Revert the changes
-                vscode.commands.executeCommand('undo');
-                vscode.window.showInformationMessage("Log advice discarded.");
-            }
-        } catch (error) {
-            console.error(error);
-            vscode.window.showErrorMessage("Failed to get code suggestion. " + error.message);
+        const userResponse = await vscode.window.showQuickPick(["Yes", "No"], {
+          placeHolder: "Log advice generated. Do you want to apply the changes?",
+          canPickMany: false
+        });
+  
+        if (userResponse === "Yes") {
+          vscode.window.showInformationMessage("Log advice applied.");
+        } else {
+          vscode.commands.executeCommand('undo');
+          vscode.window.showInformationMessage("Log advice discarded.");
         }
-    });
+      } catch (error) {
+        console.error(error);
+        vscode.window.showErrorMessage("Failed to get code suggestion: " + error.message);
+      }
 }
 
 function activate(context) {

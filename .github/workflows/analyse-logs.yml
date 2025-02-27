@@ -23,7 +23,12 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-      - name: Analyze logs in PR
-        run: node .logdensitytool\test\extension.test.js
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Start Ollama with Docker Compose
+        run: docker-compose up -d
+
+      - name: Wait for Ollama to start
+        run: sleep 5  # Ajuste si nécessaire
+
+      - name: Run Ollama Query
+        run: node queryOllama.js
+

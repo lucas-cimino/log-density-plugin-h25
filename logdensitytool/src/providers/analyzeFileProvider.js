@@ -3,13 +3,7 @@ const path = require('path');
 const { analyzeFiles } = require('../services/analyzeProject');
 const { readFile } = require('../utils/fileReader');
 const { runModel } = require('../services/runModelService');
-const { createApiModel, createResponse } = require('../services/factoryService');
-const { buildPrompt, getSurroundingMethodText, extractAttributesFromPrompt } = require("../utils/modelTools");
-const { configuration } = require('../model_config');
 const { generateLogAdviceForDocument } = require('../services/logAdviceService');
-const { api_id, url, port, prompt_file, default_model, default_token, llm_temperature, llm_max_token, response_id, attributes_to_comment, comment_string, injection_variable } = configuration;
-
-
 class AnalyzeFileProvider {
     constructor() {
         this._onDidChangeTreeData = new vscode.EventEmitter();
@@ -17,7 +11,6 @@ class AnalyzeFileProvider {
         this.analyzeList = new Map();
         this.remoteUrl = '';
         this.javaFileProvider = null;
-        this.apiModelService = createApiModel(api_id, url, port, default_model, default_token);
     }
 
     refresh() {
@@ -98,7 +91,7 @@ class AnalyzeFileProvider {
                 vscode.window.showErrorMessage('Remote URL is not set.');
                 return;
             }
-
+            
             const results = await analyzeFiles(this.remoteUrl, fileContents);
             this.javaFileProvider.updateJavaFiles(results);
             vscode.window.showInformationMessage('Files successfully sent for analysis.');
@@ -123,22 +116,34 @@ class AnalyzeFileProvider {
             return { filePath: element.url, fileContent, blocks: filtered };
         }));
 
-        const test = allBlocks.filter(b => b.blocks.length > 0);
+        vscode.window.showInformationMessage('Retrieved blocks with insufficient log statements.');
         return allBlocks.filter(b => b.blocks.length > 0);
     }
     
     async processAllBlocks(allBlocks) {
         for (const fileInfo of allBlocks) {
-            const document = await vscode.workspace.openTextDocument(fileInfo.filePath);
+            await vscode.window.withProgress({
+                location: vscode.ProgressLocation.Notification,
+                title: `Adding missing logs to: ${path.basename(fileInfo.filePath)}`,
+                cancellable: false
+            }, async (progress) => {
+                progress.report({ message: "Contacting LLM..." });
+                try {
+                    const document = await vscode.workspace.openTextDocument(fileInfo.filePath);
     
-            for (const block of fileInfo.blocks) {
-                const cursorLine = block.blockLineStart; 
-    
-                await generateLogAdviceForDocument(
-                    document,
-                    cursorLine
-                );
-            }
+                    for (const block of fileInfo.blocks) {
+                        const cursorLine = block.blockLineStart; 
+
+                        await generateLogAdviceForDocument(
+                            document,
+                            cursorLine
+                        );
+                    }
+                    vscode.window.showInformationMessage(`Finished adding logs for : ${path.basename(fileInfo.filePath)}`);
+                } catch (error) {
+                    vscode.window.showErrorMessage('An error occurred while attempting to add missing logs.');
+                }
+            });
         }
     }
 }
@@ -170,7 +175,11 @@ function registerAnalyzeFileProvider(context) {
 
     context.subscriptions.push(vscode.commands.registerCommand('analyzeFileProvider.analyzeAndAddMissingLogs', async () => {
         const blocks = await analyzeFileProvider.getBlocks();
-        await analyzeFileProvider.processAllBlocks(blocks);
+        if (blocks.length > 0) {
+            await analyzeFileProvider.processAllBlocks(blocks);
+        }else{
+            vscode.window.showInformationMessage('No files with insufficient log statements found.');
+        }
     }));
     
     return analyzeFileProvider;  

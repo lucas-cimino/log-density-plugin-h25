@@ -108,6 +108,10 @@ async function generateLogAdviceForDocument(document, cursorLine) {
   });
 
   await vscode.workspace.applyEdit(edit);
+
+  const newPosition = new vscode.Position(cursorLine + linesToInsert.length, 0);
+  const editor = await vscode.window.showTextDocument(document.uri);
+  editor.revealRange(new vscode.Range(newPosition, newPosition));
 }
 
 module.exports = {

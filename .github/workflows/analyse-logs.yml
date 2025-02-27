@@ -27,7 +27,7 @@ jobs:
         run: npm install
 
       - name: Start Ollama with Docker Compose
-        run: docker-compose -f ../../services/docker-compose.yml up -d
+        run: docker-compose -f services/docker-compose.yml up -d
 
       - name: Wait for Ollama to start
         run: sleep 5  # Ajuste si nécessaire

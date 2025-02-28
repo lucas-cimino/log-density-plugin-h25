@@ -73,37 +73,53 @@ class AnalyzeFileProvider {
     }
 
     async sendFilesForAnalysis() {
-        const fileContents = await Promise.all([...this.analyzeList.values()].map(async javaItem => {
-            try {
-                const content = await readFile(javaItem.filepath);
-                return {
-                    url: javaItem.filepath,
-                    content: content
-                };
-            } catch (error) {
-                console.error(`Error processing file ${javaItem.filepath}: ${error}`);
-                throw error;
-            }
-        }));
+        return await vscode.window.withProgress(
+            {
+                location: vscode.ProgressLocation.Notification,
+                title: "Analyzing files",
+                cancellable: false
+            },
+            async (progress) => {
+                try {
+                    progress.report({ message: "Reading files..." });
+    
+                    const fileContents = await Promise.all([...this.analyzeList.values()].map(async javaItem => {
+                        try {
+                            const content = await readFile(javaItem.filepath);
+                            return {
+                                url: javaItem.filepath,
+                                content: content
+                            };
+                        } catch (error) {
+                            console.error(`Error processing file ${javaItem.filepath}: ${error}`);
+                            throw error;
+                        }
+                    }));
+    
+                    if (!this.remoteUrl) {
+                        vscode.window.showErrorMessage('Remote URL is not set.');
+                        return null;
+                    }
+    
+                    progress.report({ message: "Sending files for analysis..." });
+    
+                    const results = await analyzeFiles(this.remoteUrl, fileContents);
+                    this.javaFileProvider.updateJavaFiles(results);
+    
+                    vscode.window.showInformationMessage('Files successfully sent for analysis.');
+                    return results;
 
-        try {
-            if (!this.remoteUrl) {
-                vscode.window.showErrorMessage('Remote URL is not set.');
-                return;
+                } catch (error) {
+                    vscode.window.showErrorMessage('Failed to send files for analysis: ' + error.message);
+                    return null;
+                }
             }
-            
-            const results = await analyzeFiles(this.remoteUrl, fileContents);
-            this.javaFileProvider.updateJavaFiles(results);
-            vscode.window.showInformationMessage('Files successfully sent for analysis.');
-            return results;
-        } catch (error) {
-            vscode.window.showErrorMessage('Failed to send files for analysis: ' + error.message);
-        }
+        );
     }
-
+    
     async getBlocks() {
         const results = await this.sendFilesForAnalysis();
-        //TODO : do the opposite filter to only keep ones with higher density than predicted and ask it to remove logs
+
         //Filter files to only keep those with a lower density than predicted
         const filteredFiles = results.filter(f => f.density < f.predictedDensity);
 
@@ -177,7 +193,7 @@ function registerAnalyzeFileProvider(context) {
         const blocks = await analyzeFileProvider.getBlocks();
         if (blocks.length > 0) {
             await analyzeFileProvider.processAllBlocks(blocks);
-        }else{
+        } else{
             vscode.window.showInformationMessage('No files with insufficient log statements found.');
         }
     }));

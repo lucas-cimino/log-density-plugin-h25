@@ -19,3 +19,7 @@ open_source_java_projects/**
 .venv
 
 **.DS_Store
+
+# Ignore actions-runner
+
+actions-runner

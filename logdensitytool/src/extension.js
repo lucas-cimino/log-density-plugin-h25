@@ -269,10 +269,6 @@ function improveLogsCommand() {
                             edit.insert(document.uri, line.range.start, formattedLine);
                         }
                         else if (defaultLogRegex.test(formattedLine) || errorLogRegex.test(formattedLine)) {
-                            const newRange = new vscode.Range(
-                                line.range.start,
-                                line.range.end
-                            );
                             edit.replace(document.uri, line.range, '\n' + formattedLine);
                             break;
                         }

@@ -1,5 +1,5 @@
 Improve the following log message by fixing typos and adding more context to replace it to this Java method in empty spaces.
-If you don't find any improvement, don't change the log.
+If you don't find any improvement, don't change the log and say "No necessary changes needed" in the reason.
 The log:
 
 {log_message}

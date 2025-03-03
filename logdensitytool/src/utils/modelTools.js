@@ -29,28 +29,36 @@ function buildPrompt(text, systemPrompt, attribute) {
 }
 
 function buildMultipleAttributesPrompt(selectedText, surroundingText, systemPrompt, attributes) {
-    try {
-        systemPrompt = String(systemPrompt);
-        // Create a dynamic regular expression to match the attribute
-        const regex1 = new RegExp(attributes[0], 'g'); // 'g' for global replacement
-        const regex2 = new RegExp(attributes[1], 'g'); // 'g' for global replacement
-        // Replace the attribute with the content
-        if (systemPrompt.includes(attributes[0])) {
-            // Replace the attribute with the content
-            let updatedPrompt = systemPrompt.replace(regex1, selectedText);
-            if (systemPrompt.includes(attributes[1])) {
-                // Replace the attribute with the content
-                const updatedPromptFinal = updatedPrompt.replace(regex2, surroundingText);
-                return updatedPromptFinal;
-            }
-        } else {
-            // If the attribute is not found, append text at the end
-            return systemPrompt + text;
-        }
-    } catch (error) {
-        console.error("Error in build function:", error.message);
-        return null;
+    // try {
+    //     systemPrompt = String(systemPrompt);
+    //     // Create a dynamic regular expression to match the attribute
+    //     const regex1 = new RegExp(attributes[0], 'g'); // 'g' for global replacement
+    //     const regex2 = new RegExp(attributes[1], 'g'); // 'g' for global replacement
+    //     // Replace the attribute with the content
+    //     if (systemPrompt.includes(attributes[0])) {
+    //         // Replace the attribute with the content
+    //         let updatedPrompt = systemPrompt.replace(regex1, selectedText);
+    //         if (systemPrompt.includes(attributes[1])) {
+    //             // Replace the attribute with the content
+    //             const updatedPromptFinal = updatedPrompt.replace(regex2, surroundingText);
+    //             return updatedPromptFinal;
+    //         }
+    //     } else {
+    //         // If the attribute is not found, append text at the end
+    //         return systemPrompt + text;
+    //     }
+    // } catch (error) {
+    //     console.error("Error in build function:", error.message);
+    //     return null;
+    // }
+
+    let currPrompt = "";
+    let updatedPrompt = "";
+    for (let i = 0; i < attributes.length; i++) {
+        currPrompt = buildPrompt(i === 0 ? selectedText : surroundingText,
+             i === 0 ? systemPrompt : currPrompt, attributes[i]);
     }
+    return currPrompt;
 }
 
 function getSurroundingMethodText(document, lineNumber) {

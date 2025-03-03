@@ -162,13 +162,13 @@ function improveLogsCommand() {
     const selection = editor.selection;
     const cursorLine = selection.active.line;
     let selectedText = "";
-    let surroundingText = "";
+    let contextText = "";
 
     if (!selection.isEmpty) {
         selectedText = document.getText(selection);
     }
     
-    surroundingText = getSurroundingMethodText(document, cursorLine);
+    contextText = editor.document.getText();
     // Générer un prompt spécifique pour le modèle
     let prompt = (
         // Promt modifiable dans le backend dans un fichier config
@@ -219,7 +219,7 @@ function improveLogsCommand() {
             }
             
             // Build Prompt
-            const builtPrompt = buildMultipleAttributesPrompt(selectedLog, surroundingText, system_prompt, [logs_variable, injection_variable])
+            const builtPrompt = buildMultipleAttributesPrompt(selectedLog, contextText, system_prompt, [logs_variable, injection_variable])
             if (builtPrompt != null) {
                 prompt = builtPrompt
             }
@@ -255,8 +255,29 @@ function improveLogsCommand() {
                 // Preserve the detected indentation for all lines after the first
                 const formattedLine = i > 0 ? detectedIndent + lineText : lineText;
 
-                // Insert the formatted line
-                edit.insert(document.uri, cursorPosition, formattedLine + '\n');
+                const commentRegex = /\/\/\s/;
+                const noChangesRegex = /No necessary changes needed/;
+                if (commentRegex.test(formattedLine) && noChangesRegex.test(formattedLine)) {
+                    vscode.window.showInformationMessage("No changes needed in the selected code block.");
+                    return;
+                }
+
+                for (let j = 0; j < document.lineCount; j++) {
+                    const line = document.lineAt(j);
+                    if (defaultLogRegex.test(line.text) || errorLogRegex.test(line.text)) {
+                        if (commentRegex.test(formattedLine)) {
+                            edit.insert(document.uri, line.range.start, formattedLine);
+                        }
+                        else if (defaultLogRegex.test(formattedLine) || errorLogRegex.test(formattedLine)) {
+                            const newRange = new vscode.Range(
+                                line.range.start,
+                                line.range.end
+                            );
+                            edit.replace(document.uri, line.range, '\n' + formattedLine);
+                            break;
+                        }
+                    }
+                }
             }
 
             // Apply the edit

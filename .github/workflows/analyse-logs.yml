@@ -37,5 +37,7 @@ jobs:
         run: sleep 10  # Ajuste si nécessaire
 
       - name: Run Ollama Query
-        run: node logdensitytool/src/services/apiModel/queryOllama.js
+        run: curl -X POST http://localhost:11434/api/pull -d '{"model": "llama2:3b"}'
+
+
         

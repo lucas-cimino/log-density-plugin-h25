@@ -23,13 +23,13 @@ jobs:
           if (-not (Get-Command docker-compose -ErrorAction SilentlyContinue)) {
             choco install docker-compose
           }
-            
+
       - name: Get Changed Files in PR
-        shell: bash
+        shell: powershell
         run: |
           git fetch origin ${{ github.base_ref }} --depth=1
-          git diff --unified=0 origin/${{ github.base_ref }} -- > pr_changes.diff
-          cat pr_changes.diff
+          git diff --unified=0 origin/${{ github.base_ref }} --output=pr_changes.diff
+          Get-Content pr_changes.diff
 
       - name: Set up Node.js
         uses: actions/setup-node@v4

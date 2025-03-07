@@ -11,10 +11,12 @@ async function runQuery() {
     try {
         // Check if the model is available
         const modelsInfo = await ollama.info();
-        if (!modelsInfo.model.includes(MODEL)) {
-            console.log(`Model ${MODEL} not found. Pulling it now...`);
-            await ollama.changeModel(MODEL);
-        }
+        console.log(modelsInfo.model);
+        MODEL = modelsInfo.model;
+        // if (!modelsInfo.model.includes(MODEL)) {
+        //     console.log(`Model ${MODEL} not found. Pulling it now...`);
+        //     await ollama.changeModel(MODEL);
+        // }
 
         // Generate text
         const response = await ollama.generate(MODEL, "", PROMPT, 0.8, 128);

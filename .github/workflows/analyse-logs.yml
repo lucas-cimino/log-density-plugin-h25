@@ -34,7 +34,7 @@ jobs:
         run: docker-compose -f services/docker-compose.yml up -d
 
       - name: Wait for Ollama to start
-        run: sleep 20  # Ajuste si nécessaire
+        run: sleep 10  # Ajuste si nécessaire
 
       - name: Run Ollama Query
         run: node logdensitytool/src/services/apiModel/queryOllama.js

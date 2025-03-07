@@ -1,3 +1,5 @@
+import { Console } from 'console';
+
 const OllamaApiModel = require('./ollamaApiModelService');
 const fs = require('fs');
 
@@ -16,6 +18,8 @@ async function runQuery() {
         if (fs.existsSync('pr_changes.diff')) {
             changes = fs.readFileSync('pr_changes.diff', 'utf8');
         }
+
+        Console.log("Voici les changements: "+changes);
 
         // Check if the model is available
         const modelsInfo = await ollama.info();

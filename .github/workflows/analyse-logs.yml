@@ -37,7 +37,5 @@ jobs:
         run: sleep 10  # Ajuste si nécessaire
 
       - name: Run Ollama Query
-        run: ollama pull llama2:3b
-
-
+        run: node logdensitytool/src/services/apiModel/queryOllama.js
         

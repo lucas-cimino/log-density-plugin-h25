@@ -1,5 +1,3 @@
-import { Console } from 'console';
-
 const OllamaApiModel = require('./ollamaApiModelService');
 const fs = require('fs');
 

@@ -9,6 +9,14 @@ async function runQuery() {
     const ollama = new OllamaApiModel(OLLAMA_URL, OLLAMA_PORT, MODEL, null);
 
     try {
+        // Check if the model is available
+        const modelsInfo = await ollama.info();
+        if (!modelsInfo.model.includes(MODEL)) {
+            console.log(`Model ${MODEL} not found. Pulling it now...`);
+            await ollama.changeModel(MODEL);
+        }
+
+        // Generate text
         const response = await ollama.generate(MODEL, "", PROMPT, 0.8, 128);
         console.log("Réponse d'Ollama:", response);
     } catch (error) {

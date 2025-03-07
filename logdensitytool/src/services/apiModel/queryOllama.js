@@ -19,7 +19,7 @@ async function runQuery() {
             changes = fs.readFileSync('pr_changes.diff', 'utf8');
         }
 
-        Console.log("Voici les changements: "+changes);
+        console.log("Voici les changements: "+changes);
 
         // Check if the model is available
         const modelsInfo = await ollama.info();

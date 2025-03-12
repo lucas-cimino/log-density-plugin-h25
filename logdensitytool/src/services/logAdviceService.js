@@ -102,8 +102,8 @@ async function generateLogAdviceForDocument(document, cursorLine) {
   const lineIndentMatch = currentLineText.match(/^\s*/);
   const detectedIndent = lineIndentMatch ? lineIndentMatch[0] : '';
 
-  linesToInsert.forEach((lineText, i) => {
-    const formattedLine = i > 0 ? detectedIndent + lineText : lineText;
+  linesToInsert.forEach((lineText) => {
+    const formattedLine = detectedIndent + lineText
     edit.insert(document.uri, cursorPosition, formattedLine + "\n");
   });
 
@@ -112,6 +112,8 @@ async function generateLogAdviceForDocument(document, cursorLine) {
   const newPosition = new vscode.Position(cursorLine + linesToInsert.length, 0);
   const editor = await vscode.window.showTextDocument(document.uri);
   editor.revealRange(new vscode.Range(newPosition, newPosition));
+
+  return linesToInsert.length;
 }
 
 module.exports = {

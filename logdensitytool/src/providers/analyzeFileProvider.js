@@ -118,22 +118,51 @@ class AnalyzeFileProvider {
     }
     
     async getBlocks() {
-        const results = await this.sendFilesForAnalysis();
+        try {
+            const results = await this.sendFilesForAnalysis();
+            const filteredFiles = results.filter(f => f.density < f.predictedDensity);
+    
+            if (filteredFiles.length === 0) {
+                vscode.window.showInformationMessage('No files require additional logs.');
+                return [];
+            }
+    
+            console.log(`Processing ${filteredFiles.length} files with insufficient log density.`);
+    
+            const allBlocks = await Promise.all(filteredFiles.map(async (element) => {
+                try {
+                    const fileContent = await readFile(element.url);
+                    const result = await runModel(this.remoteUrl, fileContent);
+    
+                    if (!result.blocks || !Array.isArray(result.blocks)) {
+                        console.warn(`No blocks found for file: ${element.url}`);
+                        return { filePath: element.url, fileContent, blocks: [] };
+                    }
 
-        //Filter files to only keep those with a lower density than predicted
-        const filteredFiles = results.filter(f => f.density < f.predictedDensity);
+                    const filtered = result.blocks.filter(block => block.currentLogLevel < block.log_level);
+    
+                    return { filePath: element.url, fileContent, blocks: filtered };
 
-        const allBlocks = await Promise.all(filteredFiles.map(async (element) => {
-            const fileContent = await readFile(element.url);
-            const result = await runModel(this.remoteUrl, fileContent);
-
-            //Filter blocks to only keep those with a lower log level than predicted
-            const filtered = result.blocks.filter(block => block.currentLogLevel < block.log_level);
-            return { filePath: element.url, fileContent, blocks: filtered };
-        }));
-
-        vscode.window.showInformationMessage('Retrieved blocks with insufficient log statements.');
-        return allBlocks.filter(b => b.blocks.length > 0);
+                } catch (error) {
+                    console.error(`Error processing file ${element.url}:`, error);
+                    return { filePath: element.url, fileContent: '', blocks: [] };
+                }
+            }));
+    
+            const finalBlocks = allBlocks.filter(b => b.blocks.length > 0);
+    
+            if (finalBlocks.length === 0) {
+                vscode.window.showInformationMessage('No blocks require additional logs.');
+            } else {
+                vscode.window.showInformationMessage(`Retrieved ${finalBlocks.length} files with insufficient log statements.`);
+            }
+    
+            return finalBlocks;
+        } catch (error) {
+            console.error('Error in getBlocks:', error);
+            vscode.window.showErrorMessage('An error occurred while retrieving blocks.');
+            return [];
+        }
     }
     
     async processAllBlocks(allBlocks) {
@@ -144,17 +173,34 @@ class AnalyzeFileProvider {
                 cancellable: false
             }, async (progress) => {
                 progress.report({ message: "Contacting LLM..." });
+                
                 try {
                     const document = await vscode.workspace.openTextDocument(fileInfo.filePath);
-    
+                    let totalLinesAdded = 0;
+                
                     for (const block of fileInfo.blocks) {
-                        const cursorLine = block.blockLineStart; 
+                        const adjustedStartLine = block.blockLineStart + totalLinesAdded;
+                        let methodBodyStartLine = adjustedStartLine;
 
-                        await generateLogAdviceForDocument(
-                            document,
-                            cursorLine
-                        );
+                        while (methodBodyStartLine < document.lineCount) {
+                            const currentLineText = document.lineAt(methodBodyStartLine).text.trim();
+                            if (currentLineText.endsWith('{')) {
+                                break;
+                            }
+                            methodBodyStartLine++;
+                        }
+                
+                        if (methodBodyStartLine < document.lineCount) {
+                          
+                            const linesAdded = await generateLogAdviceForDocument(
+                                document,
+                                methodBodyStartLine + 1
+                            );
+                            
+                            totalLinesAdded += linesAdded;
+                        }
                     }
+                
                     vscode.window.showInformationMessage(`Finished adding logs for : ${path.basename(fileInfo.filePath)}`);
                 } catch (error) {
                     vscode.window.showErrorMessage('An error occurred while attempting to add missing logs.');

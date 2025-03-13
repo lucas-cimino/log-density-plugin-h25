@@ -13,8 +13,8 @@ async function runQuery() {
         
         // Vérifier si le fichier des changements existe
         let changes = "Aucun changement trouvé.";
-        if (fs.existsSync('pr_changes.diff')) {
-            changes = fs.readFileSync('pr_changes.diff', 'utf8');
+        if (fs.existsSync('logs_extracted.txt')) {
+            changes = fs.readFileSync('logs_extracted.txt', 'utf8');
         }
 
         console.log("Voici les changements: "+changes);
@@ -30,8 +30,11 @@ async function runQuery() {
         const response = await ollama.generate(MODEL, "", PROMPT_INTRO + changes, 0.8, 128);
         console.log("Réponse d'Ollama:", response);
     } catch (error) {
-        console.error("Erreur avec Ollama:", error);
-    }
+        console.error("Erreur avec Ollama:", error.message);
+        if (error.response) {
+            console.error("Response Status:", error.response.status);
+            console.error("Response Data:", JSON.stringify(error.response.data, null, 2));
+        }    }
 }
 
 runQuery();

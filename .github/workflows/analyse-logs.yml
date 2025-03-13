@@ -24,12 +24,32 @@ jobs:
             choco install docker-compose
           }
 
-      - name: Get Changed Files in PR
+      - name: Extract Java Log Statements from Changed Files
         shell: powershell
         run: |
           git fetch origin ${{ github.base_ref }} --depth=1
-          git diff --unified=0 origin/${{ github.base_ref }} --output=pr_changes.diff
-          Get-Content pr_changes.diff
+          git diff --name-only origin/${{ github.base_ref }} -- '*.java' > changed_java_files.txt
+          
+          $logStatements = @()
+          $changedFiles = Get-Content changed_java_files.txt
+
+          foreach ($file in $changedFiles) {
+              if (Test-Path $file) {
+                  $content = Get-Content $file -Raw
+                  $matches = [regex]::Matches($content, 'LOG\.(info|debug|warn|error)\(.*?\)|System\.out\.println\(.*?\)')
+
+                  if ($matches.Count -gt 0) {
+                      $logStatements += "File: $file`n$matches`n"
+                  }
+              }
+          }
+
+          if ($logStatements.Count -gt 0) {
+              $logStatements | Out-File logs_extracted.txt -Encoding utf8
+              Get-Content logs_extracted.txt
+          } else {
+              echo "No logs found in changed files."
+          }
 
       - name: Set up Node.js
         uses: actions/setup-node@v4

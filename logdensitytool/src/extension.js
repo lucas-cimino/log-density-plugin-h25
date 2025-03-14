@@ -185,14 +185,15 @@ function improveLogsCommand() {
     }
 
     const logLines = selectedText.split('\n');
-    let selectedLog = "";
+    const logLinesSelected = [];
+    const selectStart = editor.selection.start;
+    let i = 1;
     for (let line of logLines) {
         if (defaultLogRegex.test(line) || errorLogRegex.test(line)) {
-            selectedLog = line.trim();
-            break;
+            logLinesSelected.push({"line": line.trim(), "lineNotTrim": line});
         }
+        i++;
     }
-
 
     // Show loading progress window while waiting for the response
     vscode.window.withProgress({
@@ -203,98 +204,106 @@ function improveLogsCommand() {
         progress.report({ message: "Contacting LLM..." });
 
         try {
-            // Call your LLM service
-            const model = await apiModelService.getModel();
 
-            // Get the current directory of the script
-            const projectBasePath = path.resolve(__dirname, "..", "..");
-            let system_prompt = await readFile(path.join(projectBasePath, "prompt", improve_log_prompt_file)) // Extract prompt from txt file
+            for (let i = 0; i < logLinesSelected.length; i++) {
 
-            let attributes = []
-            // Find and extract attributes from prompt {{json}}
-            if (system_prompt.includes("{{") && system_prompt.includes("}}")) {
-                attributes = extractAttributesFromPrompt(system_prompt, attributes_to_comment) // Extract attributes from prompt {{json}}
-                system_prompt = system_prompt.replace("{{", "{");
-                system_prompt = system_prompt.replace("}}", "}");
-            }
-            
-            // Build Prompt
-            const builtPrompt = buildMultipleAttributesPrompt(selectedLog, contextText, system_prompt, [logs_variable, injection_variable])
-            if (builtPrompt != null) {
-                prompt = builtPrompt
-            }
+                const selectedLog = logLinesSelected[i];
 
-            console.log(prompt);
+                // Call your LLM service
+                const model = await apiModelService.getModel();
 
-            let linesToInsert = [];
-            while (linesToInsert.length === 0) {
-                
-                console.log("Improving Logs...");
-                const modelResponse = await apiModelService.generate(model, null, prompt, llm_temperature, llm_max_token);
-                if (attributes.length > 0) {
-                    linesToInsert = reponseService.extractLines(modelResponse, attributes, attributes_to_comment, comment_string);
-                } else {
-                    const standardResponse = createResponse(StandardResponse.responseId)
-                    linesToInsert = standardResponse.extractLines(modelResponse, attributes, attributes_to_comment, comment_string);
+                // Get the current directory of the script
+                const projectBasePath = path.resolve(__dirname, "..", "..");
+                let system_prompt = await readFile(path.join(projectBasePath, "prompt", improve_log_prompt_file)) // Extract prompt from txt file
+
+                let attributes = []
+                // Find and extract attributes from prompt {{json}}
+                if (system_prompt.includes("{{") && system_prompt.includes("}}")) {
+                    attributes = extractAttributesFromPrompt(system_prompt, attributes_to_comment) // Extract attributes from prompt {{json}}
+                    system_prompt = system_prompt.replace("{{", "{");
+                    system_prompt = system_prompt.replace("}}", "}");
                 }
                 
-            }
-
-            let cursorPosition = editor.selection.active;
-
-            // Detect indentation style based on the current line
-            const currentLineText = document.lineAt(cursorPosition.line).text;
-            const lineIndentMatch = currentLineText.match(/^\s*/); // Match leading whitespace (spaces or tabs)
-            const detectedIndent = lineIndentMatch ? lineIndentMatch[0] : ''; // Preserve tabs or spaces
-
-            const edit = new vscode.WorkspaceEdit();
-
-            for (let i = 0; i < linesToInsert.length; i++) {
-                let lineText = linesToInsert[i];
-
-                // Preserve the detected indentation for all lines after the first
-                const formattedLine = i > 0 ? detectedIndent + lineText : lineText;
-
-                const commentRegex = /\/\/\s/;
-                const noChangesRegex = /No necessary changes needed/;
-                if (commentRegex.test(formattedLine) && noChangesRegex.test(formattedLine)) {
-                    vscode.window.showInformationMessage("No changes needed in the selected code block.");
-                    return;
+                // Build Prompt
+                const builtPrompt = buildMultipleAttributesPrompt(selectedLog["line"], contextText, system_prompt, [logs_variable, injection_variable])
+                if (builtPrompt != null) {
+                    prompt = builtPrompt
                 }
 
-                for (let j = 0; j < document.lineCount; j++) {
-                    const line = document.lineAt(j);
-                    if (defaultLogRegex.test(line.text) || errorLogRegex.test(line.text)) {
-                        if (commentRegex.test(formattedLine)) {
-                            edit.insert(document.uri, line.range.start, formattedLine);
-                        }
-                        else if (defaultLogRegex.test(formattedLine) || errorLogRegex.test(formattedLine)) {
-                            edit.replace(document.uri, line.range, '\n' + formattedLine);
-                            break;
+                console.log(prompt);
+
+                let linesToInsert = [];
+                while (linesToInsert.length === 0) {
+                    
+                    console.log("Improving Logs...");
+                    const modelResponse = await apiModelService.generate(model, null, prompt, llm_temperature, llm_max_token);
+                    if (attributes.length > 0) {
+                        linesToInsert = reponseService.extractLines(modelResponse, attributes, attributes_to_comment, comment_string);
+                    } else {
+                        const standardResponse = createResponse(StandardResponse.responseId)
+                        linesToInsert = standardResponse.extractLines(modelResponse, attributes, attributes_to_comment, comment_string);
+                    }
+                    
+                }
+
+                let cursorPosition = editor.selection.active;
+
+                // Detect indentation style based on the current line
+                const currentLineText = selectedLog["lineNotTrim"];
+                const lineIndentMatch = currentLineText.match(/^\s*/); // Match leading whitespace (spaces or tabs)
+                const detectedIndent = lineIndentMatch ? lineIndentMatch[0] : ''; // Preserve tabs or spaces
+
+                const edit = new vscode.WorkspaceEdit();
+
+                for (let i = 0; i < linesToInsert.length; i++) {
+                    let lineText = linesToInsert[i]
+
+                    // Preserve the detected indentation for all lines after the first
+                    const formattedLine = detectedIndent + lineText;
+
+                    const commentRegex = /\/\/\s/;
+                    const noChangesRegex = /No necessary changes needed/;
+                    if (commentRegex.test(formattedLine) && noChangesRegex.test(formattedLine)) {
+                        vscode.window.showInformationMessage("No changes needed in the selected code block.");
+                        return;
+                    }
+
+                    for (let j = 0; j < document.lineCount; j++) {
+                        const line = document.lineAt(j);
+                        if (line.text.includes(selectedLog["line"])) {
+                            if (commentRegex.test(formattedLine)) {
+                                edit.insert(document.uri, line.range.start, formattedLine);
+                            }
+                            else if (defaultLogRegex.test(formattedLine) || errorLogRegex.test(formattedLine)) {
+                                edit.replace(document.uri, line.range, '\n' + formattedLine);
+                                break;
+                            }
                         }
                     }
                 }
-            }
 
-            // Apply the edit
-            await vscode.workspace.applyEdit(edit);
+                // Apply the edit
+                await vscode.workspace.applyEdit(edit);
 
-            const userResponse = await vscode.window.showQuickPick(
-                ["Yes", "No"],
-                {
-                    placeHolder: "Improved logs generated. Do you want to apply the changes?",
-                    canPickMany: false
+                const userResponse = await vscode.window.showQuickPick(
+                    ["Yes", "No"],
+                    {
+                        placeHolder: "Improved logs generated. Do you want to apply the changes?",
+                        canPickMany: false
+                    }
+                );
+
+                if (userResponse === "Yes") {
+                    // Apply the changes permanently
+                    vscode.window.showInformationMessage("Improved logs applied.");
+                } else {
+                    // Revert the changes
+                    vscode.commands.executeCommand('undo');
+                    vscode.window.showInformationMessage("Improved logs discarded.");
                 }
-            );
-
-            if (userResponse === "Yes") {
-                // Apply the changes permanently
-                vscode.window.showInformationMessage("Improved logs applied.");
-            } else {
-                // Revert the changes
-                vscode.commands.executeCommand('undo');
-                vscode.window.showInformationMessage("Improved logs discarded.");
             }
+
+
         } catch (error) {
             console.error(error);
             vscode.window.showErrorMessage("Failed to get code suggestion. " + error.message);

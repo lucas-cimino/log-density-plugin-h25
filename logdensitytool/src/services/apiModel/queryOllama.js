@@ -4,7 +4,7 @@ const fs = require('fs');
 const OLLAMA_URL = "http://localhost";
 const OLLAMA_PORT = 11434;
 const MODEL = "llama3.2:3b"; // Change selon le modèle dispo
-const PROMPT_INTRO = "Voici les modifications dans un Pull Request GitHub. Analyse et résume les changements :\n\n";
+const PROMPT_INTRO = "Analyse et explique les logs trouvés dans ces fichiers Java :\n\n";
 
 async function runQuery() {
     const ollama = new OllamaApiModel(OLLAMA_URL, OLLAMA_PORT, MODEL, null);
@@ -12,7 +12,7 @@ async function runQuery() {
     try {
         
         // Vérifier si le fichier des changements existe
-        let changes = "Aucun changement trouvé.";
+        let logsData = "Aucun logs trouvés.";
         if (fs.existsSync('logs_extracted.txt')) {
             changes = fs.readFileSync('logs_extracted.txt', 'utf8');
         }

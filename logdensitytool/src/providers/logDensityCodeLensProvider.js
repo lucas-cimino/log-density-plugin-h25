@@ -33,6 +33,7 @@ class LogDensityCodeLensProvider {
                         command: 'extension.showLogDensityInfo',
                         title: `Predicted Log Density: ${logDescription} \u00A0 | \u00A0 Current Log Density: ${this.log_density_classes[block.currentLogLevel]}`,
                         tooltip: `Click for more details about the ${block.type} block starting at line ${block.blockLineStart} and ending at line ${block.blockLineEnd}`,
+                        arguments: [block]
                     }));
                 });
         return lenses;

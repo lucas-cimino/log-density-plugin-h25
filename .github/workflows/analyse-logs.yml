@@ -1,30 +1,21 @@
-name: Analyze Logs in Zookeper PR
+name: Analyze Logs in PR
 
 on:
- repository_dispatch:
-    types: [zookeeper_pr_analysis]
+  pull_request:
+    types: [opened, edited, synchronize]
+    branches:
+      - main
+      - develop
 
 jobs:
   analyze-logs:
     runs-on: self-hosted
     
     steps:
-      - name: Checkout Log Density code
+      - name: Checkout code
         uses: actions/checkout@v4
         with:   
           fetch-depth: 0  # Important pour récupérer l'historique complet
-
-
-      - name: Checkout Zookeeper PR Code
-        run: |
-          if [ -d "services/training_data/Zookeeper" ]; then
-            cd services/training_data/Zookeeper
-            git fetch origin pull/${{ github.event.client_payload.pr_number }}/head:pr-branch
-            git checkout pr-branch
-          else
-            echo "Zookeeper repo not found in training_data"
-            exit 1
-          fi
 
       - name: Install Docker Compose (if missing)
         shell: powershell
@@ -33,20 +24,27 @@ jobs:
             choco install docker-compose
           }
 
-          - name: Extract Java Log Statements
-          shell: bash
+          - name: Extract Java Logs from Local Project
+          shell: powershell
           run: |
-            log_file="logs_extracted.txt"
-            echo "" > $log_file
+            $logStatements = @()
+            $javaFiles = Get-ChildItem -Path "services/training_data" -Recurse -Filter "*.java"
   
-            while read -r file; do
-              if [ -f "services/training_data/Zookeeper/$file" ]; then
-                echo "Processing $file..."
-                grep -E 'LOG\.(info|debug|warn|error)\(.*?\)|System\.out\.println\(.*?\)' "training_data/Zookeeper/$file" >> $log_file
-              fi
-            done < changed_java_files.txt
+            foreach ($file in $javaFiles) {
+                $content = Get-Content $file.FullName -Raw
+                $matches = [regex]::Matches($content, 'LOG\.(info|debug|warn|error)\(.*?\)|System\.out\.println\(.*?\)')
   
-            cat $log_file
+                if ($matches.Count -gt 0) {
+                    $logStatements += "File: $($file.FullName)`n$matches`n"
+                }
+            }
+  
+            if ($logStatements.Count -gt 0) {
+                $logStatements | Out-File logs_extracted.txt -Encoding utf8
+                Get-Content logs_extracted.txt
+            } else {
+                echo "No logs found in Java files."
+            }
 
       - name: Set up Node.js
         uses: actions/setup-node@v4

@@ -14,10 +14,10 @@ async function runQuery() {
         // Vérifier si le fichier des changements existe
         let logsData = "Aucun logs trouvés.";
         if (fs.existsSync('logs_extracted.txt')) {
-            changes = fs.readFileSync('logs_extracted.txt', 'utf8');
+            logsData  = fs.readFileSync('logs_extracted.txt', 'utf8');
         }
 
-        console.log("Voici les changements: "+changes);
+        console.log("Voici les changements: "+logsData );
 
         // Check if the model is available
         const modelsInfo = await ollama.info();
@@ -27,7 +27,7 @@ async function runQuery() {
         }
 
         // Generate text
-        const response = await ollama.generate(MODEL, "", PROMPT_INTRO + changes, 0.8, 128);
+        const response = await ollama.generate(MODEL, "", PROMPT_INTRO + logsData , 0.8, 128);
         console.log("Réponse d'Ollama:", response);
     } catch (error) {
         console.error("Erreur avec Ollama:", error.message);

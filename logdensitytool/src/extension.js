@@ -121,7 +121,7 @@ function activate(context) {
     });
 
     // File event handlers, sends file content to backend on change
-    const analyzeEditedFileDisposable = vscode.workspace.onDidSaveTextDocument(event => {
+    const analyzeEditedFileDisposable = vscode.workspace.onDidChangeTextDocument(event => {
         if (trained && remoteUrl && event.document.languageId === "java") {
             analyzeDocument(event.document);
         }

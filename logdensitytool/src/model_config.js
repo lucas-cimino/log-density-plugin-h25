@@ -12,7 +12,8 @@ let configuration = {
     api_id : OllamaApiModel.apiId, //ollama and huggingface available
     url : "http://localhost", // Service URL
     port : "11434", // Service Port
-    prompt_file : "generate_log.txt", // From prompt Folder
+    generate_log_prompt_file : "generate_log.txt", // From prompt Folder
+    improve_log_prompt_file : "improve_log.txt", // From prompt Folder
     default_model : "llama3.2:3b",
     default_token : "", // Only used for huggingface
     llm_temperature: null, // (Default: 0.8) value between 0 and 1. Increasing the temperature will make the model answer more creatively. (null = not configured)
@@ -20,7 +21,8 @@ let configuration = {
     response_id :  JsonResponse.responseId, // select valid response id
     attributes_to_comment : ["reason"], // list of attributes to comment
     comment_string: "//", // Comment string to add
-    injection_variable: "{vscode_content}" // variable to inject vscode content in prompt
+    injection_variable: "{vscode_content}", // variable to inject vscode content in prompt
+    logs_variable: "{log_message}" // variable to inject logs in prompt
 }
 
 

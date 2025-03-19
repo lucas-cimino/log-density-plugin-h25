@@ -10,10 +10,12 @@ const { registerAnalyzeFileProvider } = require('./providers/analyzeFileProvider
 const { createApiModel, createResponse } = require('./services/factoryService');
 const { configuration } = require('./model_config');
 const { readFile } = require("./utils/fileReader");
-const { buildPrompt, getSurroundingMethodText, extractAttributesFromPrompt } = require("./utils/modelTools")
+const { buildPrompt, buildMultipleAttributesPrompt, getSurroundingMethodText, extractAttributesFromPrompt } = require("./utils/modelTools")
 const path = require('path');
 
-const { api_id, url, port, prompt_file, default_model, default_token, llm_temperature, llm_max_token, response_id, attributes_to_comment, comment_string, injection_variable } = configuration;
+const { api_id, url, port, generate_log_prompt_file, improve_log_prompt_file, default_model, default_token, llm_temperature, llm_max_token, response_id, attributes_to_comment, comment_string, injection_variable, logs_variable } = configuration;
+
+const {initializeAdviceService, generateLogAdviceForDocument} = require('./services/logAdviceService');
 
 let trained = false;
 let remoteUrl; // Store the remote URL if needed
@@ -25,6 +27,7 @@ const codeLensProvider = new LogDensityCodeLensProvider();
 function initialize() {
     apiModelService = createApiModel(api_id, url, port, default_model, default_token);
     reponseService = createResponse(response_id);
+    initializeAdviceService(apiModelService, reponseService,readFile, buildPrompt, getSurroundingMethodText, extractAttributesFromPrompt, StandardResponse, createResponse, configuration);
 }
 
 async function analyzeDocument(document) {
@@ -44,106 +47,186 @@ async function generateLogAdvice() {
 
     const document = editor.document;
     const selection = editor.selection;
-    const cursorLine = selection.active.line; // Ligne actuelle du curseur
-    let selectedText = ""
+    const cursorLine = selection.active.line;
 
-    if (!selection.isEmpty) {
-        // L'utilisateur a sélectionné du texte (méthode)
-        selectedText = document.getText(selection);
+    try {
+        await generateLogAdviceForDocument(document, cursorLine);
+
+        const userResponse = await vscode.window.showQuickPick(["Yes", "No"], {
+          placeHolder: "Log advice generated. Do you want to apply the changes?",
+          canPickMany: false
+        });
+  
+        if (userResponse === "Yes") {
+          vscode.window.showInformationMessage("Log advice applied.");
+        } else {
+          vscode.commands.executeCommand('undo');
+          vscode.window.showInformationMessage("Log advice discarded.");
+        }
+      } catch (error) {
+        console.error(error);
+        vscode.window.showErrorMessage("Failed to get code suggestion: " + error.message);
+      }
+}
+
+function improveLogsCommand() {
+    const editor = vscode.window.activeTextEditor;
+    if (!editor) {
+        vscode.window.showInformationMessage("No active editor found.");
+        return;
     }
 
-    selectedText = getSurroundingMethodText(document, cursorLine);
+    const document = editor.document;
+    const selection = editor.selection;
+    let selectedText = "";
+    let contextText = "";
 
-    // Générer un prompt spécifique pour le modèle
+    if (!selection.isEmpty) {
+        selectedText = document.getText(selection);
+    } else {
+        vscode.window.showInformationMessage("Please select a code block containing logs to analyse.");
+        return;
+    }
+    
+    contextText = editor.document.getText();
     let prompt = (
-        // Promt modifiable dans le backend dans un fichier config
-        "Context: Suggest 1 log (System.out.println()) to add to method the following JAVA functions, don't return the input, only the output: \n"
-        //+ "Please only add 2 to 5 lines of code to improve log messages to the following code: "
+        "Context: For every log in this code block (System.out.print() and similar variations) improve it by checking for errors such as: -Typos in the log message -Missing context in the log -Using the wrong log type (ex: using System.out.println() when System.err.println() would be more suited because it's logging an error) \n"
         + selectedText
     );
 
-    // Show loading progress window while waiting for the response
+    const defaultLogRegex = /System\.out\.println/;
+    const errorLogRegex = /System\.err\.println/;
+    if (!defaultLogRegex.test(selectedText) && !errorLogRegex.test(selectedText)) {
+        vscode.window.showInformationMessage("No logs found in the selected code block.");
+        return;
+    }
+
+    const logLines = selectedText.split('\n');
+    const logLinesSelected = [];
+    for (let line of logLines) {
+        if (defaultLogRegex.test(line) || errorLogRegex.test(line)) {
+            logLinesSelected.push({"line": line.trim(), "lineNotTrim": line});
+        }
+    }
+
     vscode.window.withProgress({
         location: vscode.ProgressLocation.Notification,
-        title: "Generating Log Advice",
+        title: "Improving Logs",
         cancellable: false
     }, async (progress) => {
         progress.report({ message: "Contacting LLM..." });
 
         try {
-            // Call your LLM service
-            const model = await apiModelService.getModel();
+            let edit = new vscode.WorkspaceEdit();
+            for (let i = 0; i < logLinesSelected.length; i++) {
 
-            // Get the current directory of the script
-            const projectBasePath = path.resolve(__dirname, "..", "..");
-            let system_prompt = await readFile(path.join(projectBasePath, "prompt", prompt_file)) // Extract prompt from txt file
+                const selectedLog = logLinesSelected[i];
 
-            let attributes = []
-            // Find and extract attributes from prompt {{json}}
-            if (system_prompt.includes("{{") && system_prompt.includes("}}")) {
-                attributes = extractAttributesFromPrompt(system_prompt, attributes_to_comment) // Extract attributes from prompt {{json}}
-                system_prompt = system_prompt.replace("{{", "{");
-                system_prompt = system_prompt.replace("}}", "}");
-            }
-            
-            // Build Prompt
-            const builtPrompt = buildPrompt(selectedText, system_prompt, injection_variable)
-            if (builtPrompt != null) {
-                prompt = builtPrompt
-            }
+                // Call your LLM service
+                const model = await apiModelService.getModel();
 
-            let linesToInsert = [];
-            while (linesToInsert.length === 0) {
+                // Get the current directory of the script
+                const projectBasePath = path.resolve(__dirname, "..", "..");
+                let system_prompt = await readFile(path.join(projectBasePath, "prompt", improve_log_prompt_file)) // Extract prompt from txt file
+
+                let attributes = []
+                // Find and extract attributes from prompt {{json}}
+                if (system_prompt.includes("{{") && system_prompt.includes("}}")) {
+                    attributes = extractAttributesFromPrompt(system_prompt, attributes_to_comment) // Extract attributes from prompt {{json}}
+                    system_prompt = system_prompt.replace("{{", "{");
+                    system_prompt = system_prompt.replace("}}", "}");
+                }
                 
-                console.log("Generating log advice...");
-                const modelResponse = await apiModelService.generate(model, null, prompt, llm_temperature, llm_max_token);
-                if (attributes.length > 0) {
-                    linesToInsert = reponseService.extractLines(modelResponse, attributes, attributes_to_comment, comment_string);
+                // Build Prompt
+                const builtPrompt = buildMultipleAttributesPrompt(selectedLog["line"], contextText, system_prompt, [logs_variable, injection_variable])
+                if (builtPrompt != null) {
+                    prompt = builtPrompt
+                }
+
+                let linesToInsert = [];
+                while (linesToInsert.length === 0) {
+                    
+                    console.log("Improving Logs...");
+                    const modelResponse = await apiModelService.generate(model, null, prompt, llm_temperature, llm_max_token);
+                    if (attributes.length > 0) {
+                        linesToInsert = reponseService.extractLines(modelResponse, attributes, attributes_to_comment, comment_string);
+                    } else {
+                        const standardResponse = createResponse(StandardResponse.responseId)
+                        linesToInsert = standardResponse.extractLines(modelResponse, attributes, attributes_to_comment, comment_string);
+                    }
+                    
+                }
+
+                // Detect indentation style based on the current line
+                const currentLineText = selectedLog["lineNotTrim"];
+                const lineIndentMatch = currentLineText.match(/^\s*/);
+                const detectedIndent = lineIndentMatch ? lineIndentMatch[0] : '';
+
+                for (let i = 0; i < linesToInsert.length; i++) {
+                    let lineText = linesToInsert[i]
+
+                    // Preserve the detected indentation for all lines after the first
+                    const formattedLine = detectedIndent + lineText;
+
+                    const commentRegex = /\/\/\s/;
+                    const noChangesRegex = /No necessary changes needed/;
+                    const currentLogRegex = new RegExp(selectedLog["line"].replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+
+                    if ((commentRegex.test(formattedLine) && noChangesRegex.test(formattedLine)) ||
+                    (currentLogRegex.test(formattedLine))) {
+                        const editEntries = edit.entries();
+                        if (editEntries.length > 0) {
+                            const newEdit = new vscode.WorkspaceEdit();
+                            for (let i = 0; i < editEntries.length - 1; i++) {
+                                const [uri, edits] = editEntries[i];
+                                for (const singleEdit of edits) {
+                                    newEdit.replace(uri, singleEdit.range, singleEdit.newText);
+                                }
+                            }
+                            edit = newEdit;
+                        }
+                        break;
+                    }
+
+                    for (let j = 0; j < document.lineCount; j++) {
+                        const line = document.lineAt(j);
+                        if (line.text.includes(selectedLog["line"])) {
+                            if (commentRegex.test(formattedLine)) {
+                                edit.insert(document.uri, line.range.start, formattedLine);
+                            }
+                            else if (defaultLogRegex.test(formattedLine) || errorLogRegex.test(formattedLine)) {
+                                edit.replace(document.uri, line.range, '\n' + formattedLine);
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+
+            if (edit.entries().length === 0) {
+                vscode.window.showInformationMessage("No changes needed in the selected code block.");
+                return;
+            }
+                // Apply the edit
+                await vscode.workspace.applyEdit(edit);
+
+                const userResponse = await vscode.window.showQuickPick(
+                    ["Yes", "No"],
+                    {
+                        placeHolder: "Improved logs generated. Do you want to apply the changes?",
+                        canPickMany: false
+                    }
+                );
+
+                if (userResponse === "Yes") {
+                    // Apply the changes permanently
+                    vscode.window.showInformationMessage("Improved logs applied.");
                 } else {
-                    const standardResponse = createResponse(StandardResponse.responseId)
-                    linesToInsert = standardResponse.extractLines(modelResponse, attributes, attributes_to_comment, comment_string);
+                    // Revert the changes
+                    vscode.commands.executeCommand('undo');
+                    vscode.window.showInformationMessage("Improved logs discarded.");
                 }
-                
-            }
-
-            let cursorPosition = editor.selection.active;
-
-            // Detect indentation style based on the current line
-            const currentLineText = document.lineAt(cursorPosition.line).text;
-            const lineIndentMatch = currentLineText.match(/^\s*/); // Match leading whitespace (spaces or tabs)
-            const detectedIndent = lineIndentMatch ? lineIndentMatch[0] : ''; // Preserve tabs or spaces
-
-            const edit = new vscode.WorkspaceEdit();
-
-            for (let i = 0; i < linesToInsert.length; i++) {
-                let lineText = linesToInsert[i];
-
-                // Preserve the detected indentation for all lines after the first
-                const formattedLine = i > 0 ? detectedIndent + lineText : lineText;
-
-                // Insert the formatted line
-                edit.insert(document.uri, cursorPosition, formattedLine + '\n');
-            }
-
-            // Apply the edit
-            await vscode.workspace.applyEdit(edit);
-
-            const userResponse = await vscode.window.showQuickPick(
-                ["Yes", "No"],
-                {
-                    placeHolder: "Log advice generated. Do you want to apply the changes?",
-                    canPickMany: false
-                }
-            );
-
-            if (userResponse === "Yes") {
-                // Apply the changes permanently
-                vscode.window.showInformationMessage("Log advice applied.");
-            } else {
-                // Revert the changes
-                vscode.commands.executeCommand('undo');
-                vscode.window.showInformationMessage("Log advice discarded.");
-            }
+            
         } catch (error) {
             console.error(error);
             vscode.window.showErrorMessage("Failed to get code suggestion. " + error.message);
@@ -222,6 +305,7 @@ function activate(context) {
     */
 
     let generateLog = vscode.commands.registerCommand('log-advice-generator.generateLogAdvice', generateLogAdvice);
+    let improveLogs = vscode.commands.registerCommand('log-advice-generator.improveLogsCommand', improveLogsCommand);
 
     let changeModel = vscode.commands.registerCommand('log-advice-generator.changeModelId', async () => {
         const MODEL_ID = await apiModelService.getModel();
@@ -279,6 +363,7 @@ function activate(context) {
         analyzeEditedFileDisposable,
         analyzeOpenedFileDisposable,
         generateLog,
+        improveLogs,
         changeModel,
         changeToken,
         getModelInfo

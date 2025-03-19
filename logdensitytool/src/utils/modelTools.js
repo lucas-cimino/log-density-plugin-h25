@@ -56,6 +56,15 @@ function buildPrompt(texts, systemPrompt, injectionVariable) {
     }
 }
 
+function buildMultipleAttributesPrompt(selectedText, surroundingText, systemPrompt, attributes) {
+    let currPrompt = "";
+    for (let i = 0; i < attributes.length; i++) {
+        currPrompt = buildPrompt(i === 0 ? selectedText : surroundingText,
+             i === 0 ? systemPrompt : currPrompt, attributes[i]);
+    }
+    return currPrompt;
+}
+
 function getSurroundingMethodText(document, lineNumber) {
     let startLine = lineNumber;
     let endLine = lineNumber;
@@ -151,6 +160,7 @@ function extractAttributesBeforeColon(text) {
 
 module.exports = {
     buildPrompt,
+    buildMultipleAttributesPrompt,
     getSurroundingMethodText,
     extractAttributesFromPrompt
 };

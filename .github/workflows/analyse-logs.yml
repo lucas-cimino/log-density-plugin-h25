@@ -1,0 +1,51 @@
+name: Analyze Logs in PR
+
+on:
+  pull_request:
+    types: [opened, edited, synchronize]
+    branches:
+      - main
+      - develop
+
+jobs:
+  analyze-logs:
+    runs-on: self-hosted
+    permissions:
+      contents: read
+      pull-requests: write
+      
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:   
+          fetch-depth: 0  # Important pour récupérer l'historique complet
+
+      - name: Install Docker Compose (if missing)
+        shell: powershell
+        run: |
+          if (-not (Get-Command docker-compose -ErrorAction SilentlyContinue)) {
+            choco install docker-compose
+          }
+
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18.x'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Start Ollama with Docker Compose
+        run: docker-compose -f services/docker-compose.yml up -d
+
+      - name: Wait for Ollama to start
+        run: sleep 10  # Ajuste si nécessaire
+
+      - name: Run Ollama Query
+        env:
+            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+            PR_NUMBER: ${{ github.event.pull_request.number }}
+            REPO: ${{ github.repository }}
+        run: node logdensitytool/src/services/apiModel/queryOllama.js
+        

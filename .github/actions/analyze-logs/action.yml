@@ -1,0 +1,43 @@
+name: "Analyze Java Logs in PR"
+description: "Extracts and analyzes logs from Java files in a GitHub PR using Ollama."
+
+inputs:
+  github_token:
+    description: "GitHub token for fetching PR changes"
+    required: true
+  model:
+    description: "Ollama model to use"
+    required: false
+    default: "llama3.2:3b"
+
+runs:
+  using: "composite"
+  steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Extract Java Log Statements
+      shell: bash
+      run: |
+        git fetch origin ${{ github.base_ref }} --depth=1
+        git diff --name-only origin/${{ github.base_ref }} -- '*.java' > changed_java_files.txt
+
+        touch logs_extracted.txt
+        for file in $(cat changed_java_files.txt); do
+          if [ -f "$file" ]; then
+            grep -E "LOG\.(info|debug|warn|error)\(.*?\)|System\.out\.println\(.*?\)" "$file" >> logs_extracted.txt
+          fi
+        done
+
+        if [ ! -s logs_extracted.txt ]; then
+          echo "No logs found in changed files." > logs_extracted.txt
+        fi
+
+    - name: Run Ollama Analysis
+      shell: bash
+      run: |
+        docker-compose -f infrastructure/docker-compose.yml up -d
+        sleep 5
+        node logdensitytool/src/services/apiModel/queryOllama.js

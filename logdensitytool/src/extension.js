@@ -166,6 +166,9 @@ function improveLogsCommand() {
 
     if (!selection.isEmpty) {
         selectedText = document.getText(selection);
+    } else {
+        vscode.window.showInformationMessage("Please select a code block containing logs to analyse.");
+        return;
     }
     
     contextText = editor.document.getText();
@@ -204,7 +207,7 @@ function improveLogsCommand() {
         progress.report({ message: "Contacting LLM..." });
 
         try {
-
+            let edit = new vscode.WorkspaceEdit();
             for (let i = 0; i < logLinesSelected.length; i++) {
 
                 const selectedLog = logLinesSelected[i];
@@ -230,8 +233,6 @@ function improveLogsCommand() {
                     prompt = builtPrompt
                 }
 
-                console.log(prompt);
-
                 let linesToInsert = [];
                 while (linesToInsert.length === 0) {
                     
@@ -253,8 +254,6 @@ function improveLogsCommand() {
                 const lineIndentMatch = currentLineText.match(/^\s*/); // Match leading whitespace (spaces or tabs)
                 const detectedIndent = lineIndentMatch ? lineIndentMatch[0] : ''; // Preserve tabs or spaces
 
-                const edit = new vscode.WorkspaceEdit();
-
                 for (let i = 0; i < linesToInsert.length; i++) {
                     let lineText = linesToInsert[i]
 
@@ -263,9 +262,23 @@ function improveLogsCommand() {
 
                     const commentRegex = /\/\/\s/;
                     const noChangesRegex = /No necessary changes needed/;
-                    if (commentRegex.test(formattedLine) && noChangesRegex.test(formattedLine)) {
-                        vscode.window.showInformationMessage("No changes needed in the selected code block.");
-                        return;
+                    const currentLogRegex = new RegExp(selectedLog["line"].replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+
+                    if ((commentRegex.test(formattedLine) && noChangesRegex.test(formattedLine)) ||
+                    (currentLogRegex.test(formattedLine))) {
+                        const editEntries = edit.entries();
+                        if (editEntries.length > 0) {
+                            // Remove the last edit entry
+                            const newEdit = new vscode.WorkspaceEdit();
+                            for (let i = 0; i < editEntries.length - 1; i++) {
+                                const [uri, edits] = editEntries[i];
+                                for (const singleEdit of edits) {
+                                    newEdit.replace(uri, singleEdit.range, singleEdit.newText);
+                                }
+                            }
+                            edit = newEdit; // Replace the old edit with the new one
+                        }
+                        break;
                     }
 
                     for (let j = 0; j < document.lineCount; j++) {
@@ -281,7 +294,12 @@ function improveLogsCommand() {
                         }
                     }
                 }
+            }
 
+            if (edit.entries().length === 0) {
+                vscode.window.showInformationMessage("No changes needed in the selected code block.");
+                return;
+            }
                 // Apply the edit
                 await vscode.workspace.applyEdit(edit);
 
@@ -301,9 +319,7 @@ function improveLogsCommand() {
                     vscode.commands.executeCommand('undo');
                     vscode.window.showInformationMessage("Improved logs discarded.");
                 }
-            }
-
-
+            
         } catch (error) {
             console.error(error);
             vscode.window.showErrorMessage("Failed to get code suggestion. " + error.message);

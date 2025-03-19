@@ -1,15 +1,23 @@
-Improve the following log message by fixing typos and adding more context to replace it to this Java method in empty spaces.
-If you don't find any improvement, don't change the log and say "No necessary changes needed" in the reason.
-The log:
+Improve the following log message by fixing typos and adding more context if necessary.
 
+Improvements may include:
+- Fixing typos
+- Adding missing details for clarity
+- Improving phrasing for better understanding
+
+Do NOT modify the tone, structure, or wording unless absolutely necessary.
+
+**If you make no changes, you MUST set `"reason": "No necessary changes needed"` in the JSON response.**
+
+If the improved log message is *identical* to the original, the `"reason"` value must be `"No necessary changes needed"`.
+
+The log:
 {log_message}
 
 The context:
-
 {vscode_content}
 
-The response should be in the following json form and without any other explanations: 
-
+Respond strictly in this JSON format without any other explanation:
 {{
     "log_statement": "System.out.println(<log message or variable>);", 
     "reason": "how did you reason to generate the log message"

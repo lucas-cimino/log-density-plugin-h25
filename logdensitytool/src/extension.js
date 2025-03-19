@@ -18,7 +18,7 @@ const { api_id, url, port, prompt_file, default_model, default_token, llm_temper
 const {initializeAdviceService, generateLogAdviceForDocument} = require('./services/logAdviceService');
 
 let trained = false;
-let remoteUrl; // Store the remote URL if needed
+let remoteUrl = "https://github.com/apache/zookeeper.git"; // Store the remote URL if needed
 let apiModelService;
 let reponseService;
 const codeLensProvider = new LogDensityCodeLensProvider();
@@ -39,40 +39,42 @@ async function analyzeDocument(document) {
 }
 
 async function generateLogAdvice() {
-    const editor = vscode.window.activeTextEditor;
-    if (!editor) {
-        vscode.window.showInformationMessage("No active editor found.");
-        return;
-    }
+    await vscode.window.withProgress({
+            location: vscode.ProgressLocation.Notification,
+            title: `Generating Log...`,
+            cancellable: false
+        }, async () => {
+            
+            const editor = vscode.window.activeTextEditor;
 
-    const document = editor.document;
-    const selection = editor.selection;
-    const cursorLine = selection.active.line; // Ligne actuelle du curseur
-    let selectedText = ""
+            if (!editor) {
+                vscode.window.showInformationMessage("No active editor found.");
+                return;
+            }
 
-    if (!selection.isEmpty) {
-        // L'utilisateur a sélectionné du texte (méthode)
-        selectedText = document.getText(selection);
-    }
+            const document = editor.document;
+            const selection = editor.selection;
+            const cursorLine = selection.active.line;
 
-    try {
-        await generateLogAdviceForDocument(document, cursorLine);
+            try {
+                await generateLogAdviceForDocument(document, cursorLine);
 
-        const userResponse = await vscode.window.showQuickPick(["Yes", "No"], {
-          placeHolder: "Log advice generated. Do you want to apply the changes?",
-          canPickMany: false
-        });
-  
-        if (userResponse === "Yes") {
-          vscode.window.showInformationMessage("Log advice applied.");
-        } else {
-          vscode.commands.executeCommand('undo');
-          vscode.window.showInformationMessage("Log advice discarded.");
-        }
-      } catch (error) {
-        console.error(error);
-        vscode.window.showErrorMessage("Failed to get code suggestion: " + error.message);
-      }
+                const userResponse = await vscode.window.showQuickPick(["Yes", "No"], {
+                placeHolder: "Log advice generated. Do you want to apply the changes?",
+                canPickMany: false
+                });
+        
+                if (userResponse === "Yes") {
+                vscode.window.showInformationMessage("Log advice applied.");
+                } else {
+                vscode.commands.executeCommand('undo');
+                vscode.window.showInformationMessage("Log advice discarded.");
+                }
+            } catch (error) {
+                console.error(error);
+                vscode.window.showErrorMessage("Failed to get code suggestion: " + error.message);
+            }
+    })
 }
 
 function activate(context) {

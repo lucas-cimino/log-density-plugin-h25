@@ -44,6 +44,7 @@ async function generateLogAdviceForDocument(document, cursorLine) {
   } = configuration;
 
   const selectedText = getSurroundingMethodText(document, cursorLine);
+  const classVariables = getClassVariables(document);
 
   let prompt = (
     "Context: Suggest 1 log (System.out.println()) to add to method the following JAVA functions. " +
@@ -60,7 +61,7 @@ async function generateLogAdviceForDocument(document, cursorLine) {
     system_prompt = system_prompt.replace("{{", "{").replace("}}", "}");
   }
 
-  const builtPrompt = buildPrompt(selectedText, system_prompt, injection_variable);
+  const builtPrompt = buildPrompt([selectedText, classVariables], system_prompt, injection_variable);
   if (builtPrompt !== null) {
     prompt = builtPrompt;
   }
@@ -116,7 +117,18 @@ async function generateLogAdviceForDocument(document, cursorLine) {
   return linesToInsert.length;
 }
 
+
+function getClassVariables(document) {
+  const text = document.getText();
+  const variablePattern = /(private|public|protected)\s+(static\s+)?(final\s+)?(\w+\s+\w+\s*=\s*.+?;)/g;
+  const matches = text.match(variablePattern);
+  const classVariablesString = matches ? matches.join('\n') : 'No class variables found.';
+
+  return classVariablesString;
+}
+
 module.exports = {
   initializeAdviceService,
-  generateLogAdviceForDocument
+  generateLogAdviceForDocument,
+  getClassVariables
 };

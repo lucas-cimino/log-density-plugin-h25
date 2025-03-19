@@ -160,7 +160,6 @@ function improveLogsCommand() {
 
     const document = editor.document;
     const selection = editor.selection;
-    const cursorLine = selection.active.line;
     let selectedText = "";
     let contextText = "";
 

@@ -10,7 +10,10 @@ on:
 jobs:
   analyze-logs:
     runs-on: self-hosted
-    
+    permissions:
+      contents: read
+      pull-requests: write
+      
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -24,27 +27,6 @@ jobs:
             choco install docker-compose
           }
 
-      - name: Extract Java Logs from Local Project
-        shell: powershell
-        run: |
-          $logStatements = @()
-          $javaFiles = Get-ChildItem -Path "services/training_data" -Recurse -Filter "*.java"
-
-          foreach ($file in $javaFiles) {
-              $content = Get-Content $file.FullName -Raw
-              $matches = [regex]::Matches($content, 'LOG\.(info|debug|warn|error)\(.*?\)|System\.out\.println\(.*?\)')
-
-              if ($matches.Count -gt 0) {
-                  $logStatements += "File: $($file.FullName)`n$matches`n"
-              }
-          }
-
-          if ($logStatements.Count -gt 0) {
-              $logStatements | Out-File logs_extracted.txt -Encoding utf8
-              Get-Content logs_extracted.txt
-          } else {
-              echo "No logs found in Java files."
-          }
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
@@ -61,5 +43,9 @@ jobs:
         run: sleep 10  # Ajuste si nécessaire
 
       - name: Run Ollama Query
+        env:
+            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+            PR_NUMBER: ${{ github.event.pull_request.number }}
+            REPO: ${{ github.repository }}
         run: node logdensitytool/src/services/apiModel/queryOllama.js
         

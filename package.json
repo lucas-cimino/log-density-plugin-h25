@@ -5,9 +5,12 @@
     "logdensitytool"
   ],
   "scripts": {
-    "start":"code --extensionDevelopmentPath=%CD%/logdensitytool",
-    "test-ai-analysis":"pytest services/service_ai_analysis",
-    "test-model-creation":"pytest services/service_model_creation",
-    "build-service-density":"docker-compose -f ./services/docker-compose.yml up --build"
+    "start": "code --extensionDevelopmentPath=%CD%/logdensitytool",
+    "test-ai-analysis": "pytest services/service_ai_analysis",
+    "test-model-creation": "pytest services/service_model_creation",
+    "build-service-density": "docker-compose -f ./services/docker-compose.yml up --build"
+  },
+  "dependencies": {
+    "@octokit/rest": "^21.1.1"
   }
 }

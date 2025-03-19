@@ -74,6 +74,11 @@
         "category": "Log Advice Generator"
       },
       {
+        "command": "log-advice-generator.improveLogsCommand",
+        "title": "Improve Logs",
+        "category": "Log Advice Generator"
+      },
+      {
         "command": "log-advice-generator.changeModelId",
         "title": "Change Model ID",
         "category": "Log Advice Generator"
@@ -94,6 +99,10 @@
         {
           "when": "resourceLangId == java",
           "command": "extension.analyzeLogDensity",
+          "group": "navigation"
+        },
+        {
+          "command": "log-advice-generator.improveLogsCommand",
           "group": "navigation"
         },
         {

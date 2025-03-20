@@ -10,15 +10,15 @@ const { registerAnalyzeFileProvider } = require('./providers/analyzeFileProvider
 const { createApiModel, createResponse } = require('./services/factoryService');
 const { configuration } = require('./model_config');
 const { readFile } = require("./utils/fileReader");
-const { buildPrompt, buildMultipleAttributesPrompt, getSurroundingMethodText, extractAttributesFromPrompt } = require("./utils/modelTools")
+const { buildPrompt, getSurroundingMethodText, extractAttributesFromPrompt } = require("./utils/modelTools")
 const path = require('path');
 
-const { api_id, url, port, prompt_file, improve_log_prompt_file, default_model, default_token, llm_temperature, llm_max_token, response_id, attributes_to_comment, comment_string, injection_variable, logs_variable } = configuration;
+const { api_id, url, port, prompt_file, improve_log_prompt_file, default_model, default_token, llm_temperature, llm_max_token, response_id, attributes_to_comment, comment_string, injection_variable } = configuration;
 
 const {initializeAdviceService, generateLogAdviceForDocument} = require('./services/logAdviceService');
 
 let trained = false;
-let remoteUrl = "https://github.com/apache/zookeeper.git"; // Store the remote URL if needed
+let remoteUrl; // Store the remote URL if needed
 let apiModelService;
 let reponseService;
 const codeLensProvider = new LogDensityCodeLensProvider();
@@ -102,18 +102,22 @@ function improveLogsCommand() {
         + selectedText
     );
 
-    const defaultLogRegex = /System\.out\.println/;
-    const errorLogRegex = /System\.err\.println/;
-    if (!defaultLogRegex.test(selectedText) && !errorLogRegex.test(selectedText)) {
+    const javaLogRegex = /(System\.(out|err)\.println|Logger\.(debug|info|warn|error|fatal|trace|log)|log(ger)?\.(debug|info|warn|error|fatal|trace|log)|LOG(ger)?\.(debug|info|warn|error|fatal|trace|log))/;
+    if (!javaLogRegex.test(selectedText)) {
         vscode.window.showInformationMessage("No logs found in the selected code block.");
         return;
     }
 
     const logLines = selectedText.split('\n');
     const logLinesSelected = [];
+
+    
     for (let line of logLines) {
-        if (defaultLogRegex.test(line) || errorLogRegex.test(line)) {
-            logLinesSelected.push({"line": line.trim(), "lineNotTrim": line});
+        if (javaLogRegex.test(line)) {
+            logLinesSelected.push({
+                line: line.trim(),
+                lineNotTrim: line,
+            });
         }
     }
 
@@ -146,14 +150,13 @@ function improveLogsCommand() {
                 }
                 
                 // Build Prompt
-                const builtPrompt = buildMultipleAttributesPrompt(selectedLog["line"], contextText, system_prompt, [logs_variable, injection_variable])
+                const builtPrompt = buildPrompt([selectedLog["line"], contextText], system_prompt, injection_variable)
                 if (builtPrompt != null) {
                     prompt = builtPrompt
                 }
 
                 let linesToInsert = [];
                 while (linesToInsert.length === 0) {
-                    
                     console.log("Improving Logs...");
                     const modelResponse = await apiModelService.generate(model, null, prompt, llm_temperature, llm_max_token);
                     if (attributes.length > 0) {
@@ -202,7 +205,7 @@ function improveLogsCommand() {
                             if (commentRegex.test(formattedLine)) {
                                 edit.insert(document.uri, line.range.start, formattedLine);
                             }
-                            else if (defaultLogRegex.test(formattedLine) || errorLogRegex.test(formattedLine)) {
+                            else if (javaLogRegex.test(formattedLine)) {
                                 edit.replace(document.uri, line.range, '\n' + formattedLine);
                                 break;
                             }

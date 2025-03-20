@@ -26,13 +26,9 @@ function buildPrompt(texts, systemPrompt, injectionVariable) {
         if (!Array.isArray(texts)) {
             throw new Error("The 'texts' parameter must be an array.");
         }
-        if (texts.length !== attributes.length) {
-            throw new Error("The 'texts' array must have the same length as the number of attributes.");
-        }
 
         let found = false;
 
-        
         for (let i = 0; i < attributes.length; i++) {
             const attribute = attributes[i];
             const text = texts[i];
@@ -54,15 +50,6 @@ function buildPrompt(texts, systemPrompt, injectionVariable) {
         console.error("Error in buildPrompt function:", error.message);
         return null;
     }
-}
-
-function buildMultipleAttributesPrompt(selectedText, surroundingText, systemPrompt, attributes) {
-    let currPrompt = "";
-    for (let i = 0; i < attributes.length; i++) {
-        currPrompt = buildPrompt(i === 0 ? selectedText : surroundingText,
-             i === 0 ? systemPrompt : currPrompt, attributes[i]);
-    }
-    return currPrompt;
 }
 
 function getSurroundingMethodText(document, lineNumber) {
@@ -160,7 +147,6 @@ function extractAttributesBeforeColon(text) {
 
 module.exports = {
     buildPrompt,
-    buildMultipleAttributesPrompt,
     getSurroundingMethodText,
     extractAttributesFromPrompt
 };

@@ -10,10 +10,10 @@ const { registerAnalyzeFileProvider } = require('./providers/analyzeFileProvider
 const { createApiModel, createResponse } = require('./services/factoryService');
 const { configuration } = require('./model_config');
 const { readFile } = require("./utils/fileReader");
-const { buildPrompt, buildMultipleAttributesPrompt, getSurroundingMethodText, extractAttributesFromPrompt } = require("./utils/modelTools")
+const { buildPrompt, getSurroundingMethodText, extractAttributesFromPrompt } = require("./utils/modelTools")
 const path = require('path');
 
-const { api_id, url, port, generate_log_prompt_file, improve_log_prompt_file, default_model, default_token, llm_temperature, llm_max_token, response_id, attributes_to_comment, comment_string, injection_variable, logs_variable } = configuration;
+const { api_id, url, port, prompt_file, improve_log_prompt_file, default_model, default_token, llm_temperature, llm_max_token, response_id, attributes_to_comment, comment_string, injection_variable } = configuration;
 
 const {initializeAdviceService, generateLogAdviceForDocument} = require('./services/logAdviceService');
 
@@ -39,34 +39,42 @@ async function analyzeDocument(document) {
 }
 
 async function generateLogAdvice() {
-    const editor = vscode.window.activeTextEditor;
-    if (!editor) {
-        vscode.window.showInformationMessage("No active editor found.");
-        return;
-    }
+    await vscode.window.withProgress({
+            location: vscode.ProgressLocation.Notification,
+            title: `Generating Log...`,
+            cancellable: false
+        }, async () => {
+            
+            const editor = vscode.window.activeTextEditor;
 
-    const document = editor.document;
-    const selection = editor.selection;
-    const cursorLine = selection.active.line;
+            if (!editor) {
+                vscode.window.showInformationMessage("No active editor found.");
+                return;
+            }
 
-    try {
-        await generateLogAdviceForDocument(document, cursorLine);
+            const document = editor.document;
+            const selection = editor.selection;
+            const cursorLine = selection.active.line;
 
-        const userResponse = await vscode.window.showQuickPick(["Yes", "No"], {
-          placeHolder: "Log advice generated. Do you want to apply the changes?",
-          canPickMany: false
-        });
-  
-        if (userResponse === "Yes") {
-          vscode.window.showInformationMessage("Log advice applied.");
-        } else {
-          vscode.commands.executeCommand('undo');
-          vscode.window.showInformationMessage("Log advice discarded.");
-        }
-      } catch (error) {
-        console.error(error);
-        vscode.window.showErrorMessage("Failed to get code suggestion: " + error.message);
-      }
+            try {
+                await generateLogAdviceForDocument(document, cursorLine);
+
+                const userResponse = await vscode.window.showQuickPick(["Yes", "No"], {
+                placeHolder: "Log advice generated. Do you want to apply the changes?",
+                canPickMany: false
+                });
+        
+                if (userResponse === "Yes") {
+                vscode.window.showInformationMessage("Log advice applied.");
+                } else {
+                vscode.commands.executeCommand('undo');
+                vscode.window.showInformationMessage("Log advice discarded.");
+                }
+            } catch (error) {
+                console.error(error);
+                vscode.window.showErrorMessage("Failed to get code suggestion: " + error.message);
+            }
+    })
 }
 
 function improveLogsCommand() {
@@ -94,18 +102,22 @@ function improveLogsCommand() {
         + selectedText
     );
 
-    const defaultLogRegex = /System\.out\.println/;
-    const errorLogRegex = /System\.err\.println/;
-    if (!defaultLogRegex.test(selectedText) && !errorLogRegex.test(selectedText)) {
+    const javaLogRegex = /(System\.(out|err)\.println|Logger\.(debug|info|warn|error|fatal|trace|log)|log(ger)?\.(debug|info|warn|error|fatal|trace|log)|LOG(ger)?\.(debug|info|warn|error|fatal|trace|log))/;
+    if (!javaLogRegex.test(selectedText)) {
         vscode.window.showInformationMessage("No logs found in the selected code block.");
         return;
     }
 
     const logLines = selectedText.split('\n');
     const logLinesSelected = [];
+
+    
     for (let line of logLines) {
-        if (defaultLogRegex.test(line) || errorLogRegex.test(line)) {
-            logLinesSelected.push({"line": line.trim(), "lineNotTrim": line});
+        if (javaLogRegex.test(line)) {
+            logLinesSelected.push({
+                line: line.trim(),
+                lineNotTrim: line,
+            });
         }
     }
 
@@ -138,14 +150,13 @@ function improveLogsCommand() {
                 }
                 
                 // Build Prompt
-                const builtPrompt = buildMultipleAttributesPrompt(selectedLog["line"], contextText, system_prompt, [logs_variable, injection_variable])
+                const builtPrompt = buildPrompt([selectedLog["line"], contextText], system_prompt, injection_variable)
                 if (builtPrompt != null) {
                     prompt = builtPrompt
                 }
 
                 let linesToInsert = [];
                 while (linesToInsert.length === 0) {
-                    
                     console.log("Improving Logs...");
                     const modelResponse = await apiModelService.generate(model, null, prompt, llm_temperature, llm_max_token);
                     if (attributes.length > 0) {
@@ -194,7 +205,7 @@ function improveLogsCommand() {
                             if (commentRegex.test(formattedLine)) {
                                 edit.insert(document.uri, line.range.start, formattedLine);
                             }
-                            else if (defaultLogRegex.test(formattedLine) || errorLogRegex.test(formattedLine)) {
+                            else if (javaLogRegex.test(formattedLine)) {
                                 edit.replace(document.uri, line.range, '\n' + formattedLine);
                                 break;
                             }
@@ -280,9 +291,9 @@ function activate(context) {
     });
 
     // File event handlers, sends file content to backend on change
-    const analyzeEditedFileDisposable = vscode.workspace.onDidChangeTextDocument(event => {
-        if (trained && remoteUrl && event.document.languageId === "java") {
-            analyzeDocument(event.document);
+    const analyzeSavedFileDisposable = vscode.workspace.onDidSaveTextDocument(document => {
+        if (trained && remoteUrl && document.languageId === "java") {
+            analyzeDocument(document);
         }
     });
 
@@ -360,7 +371,7 @@ function activate(context) {
 
     context.subscriptions.push(
         disposableTrain,
-        analyzeEditedFileDisposable,
+        analyzeSavedFileDisposable,
         analyzeOpenedFileDisposable,
         generateLog,
         improveLogs,

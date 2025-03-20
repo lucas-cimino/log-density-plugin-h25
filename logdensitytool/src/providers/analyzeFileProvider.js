@@ -179,28 +179,28 @@ class AnalyzeFileProvider {
                     let totalLinesAdded = 0;
                 
                     for (const block of fileInfo.blocks) {
-                        const adjustedStartLine = block.blockLineStart + totalLinesAdded;
-                        let methodBodyStartLine = adjustedStartLine;
-
-                        while (methodBodyStartLine < document.lineCount) {
-                            const currentLineText = document.lineAt(methodBodyStartLine).text.trim();
-                            if (currentLineText.endsWith('{')) {
+                        block.blockLineStart += totalLinesAdded;
+                        let actualBlockStartLine = block.blockLineStart;
+                        let currentLine = block.blockLineStart;
+                        
+                        while (currentLine < document.lineCount) {
+                            const lineText = document.lineAt(currentLine - 1).text;
+                            
+                            if (lineText.includes('{')) {
+                                actualBlockStartLine = currentLine;
                                 break;
                             }
-                            methodBodyStartLine++;
-                        }
-                
-                        if (methodBodyStartLine < document.lineCount) {
-                          
-                            const linesAdded = await generateLogAdviceForDocument(
-                                document,
-                                methodBodyStartLine + 1
-                            );
                             
-                            totalLinesAdded += linesAdded;
+                            currentLine++;
                         }
+
+                        const linesAdded = await generateLogAdviceForDocument(
+                            document,
+                            actualBlockStartLine
+                        );
+                        
+                        totalLinesAdded += linesAdded;
                     }
-                
                     vscode.window.showInformationMessage(`Finished adding logs for : ${path.basename(fileInfo.filePath)}`);
                 } catch (error) {
                     vscode.window.showErrorMessage('An error occurred while attempting to add missing logs.');

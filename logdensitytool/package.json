@@ -68,6 +68,11 @@
           "dark": "media/icons/refresh-light.svg"
         }
       },
+        {
+        "command": "openTabsSidebarView.analyzeAndAddMissingLogs",
+        "title": "Add Logs to Open Tabs",
+        "icon": "media/icons/improve-logs.svg"
+      },
       {
         "command": "log-advice-generator.generateLogAdvice",
         "title": "Generate Log Advice",
@@ -130,6 +135,11 @@
           "command": "openTabsSidebarView.predictOpenTabs",
           "when": "view == openTabsSidebarView",
           "group": "navigation"
+        },
+        {
+          "command": "openTabsSidebarView.analyzeAndAddMissingLogs",
+          "when": "view == openTabsSidebarView",
+          "group": "navigation"
         }
       ],
       "view/item/context": [
@@ -160,6 +170,11 @@
         },
         {
           "command": "openTabsSidebarView.predictOpenTabs",
+          "when": "view == openTabsSidebarView",
+          "group": "navigation"
+        },
+        {
+          "command": "openTabsSidebarView.analyzeAndAddMissingLogs",
           "when": "view == openTabsSidebarView",
           "group": "navigation"
         }

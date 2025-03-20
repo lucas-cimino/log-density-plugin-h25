@@ -6,7 +6,7 @@ import re
 from jinja2 import Environment, FileSystemLoader
 from pydantic import BaseModel
 
-from app.rest import ollama_client
+from service_log_improvement.rest import ollama_client
 
 router = APIRouter()
 
@@ -79,7 +79,7 @@ def get_modified_logs_from_diff(diff):
 
         # Check for added or modified lines that contain log statements
         elif line.startswith("+") and not line.startswith("+++"):
-            if "System.out." in line or "System.err." in line:
+            if "System.out." in line or "System.err." in line or "LOG." in line:
                 if current_line_number is not None:
                     modified_line = line.lstrip("+").strip()
                     modified_logs.append((current_line_number + 1, modified_line.strip()))  # 1-based index
@@ -118,6 +118,7 @@ def improve_logs_be(diff, context):
         #"reason"
         improved_logs.append({"line": line_num, "original": log, "suggested": output["log_statement"], "reason": output["reason"]})
 
-        print(improved_logs)
+
+    print(improved_logs)
 
     return improved_logs

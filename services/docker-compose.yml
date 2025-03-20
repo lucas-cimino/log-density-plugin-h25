@@ -36,8 +36,8 @@ services:
 
   services_logs:
     build:
-      context: .
-      dockerfile: service_log_improvement/Dockerfile
+      context: service_log_improvement/
+      dockerfile: Dockerfile
     ports:
       - "8000:8000"
 

@@ -5,9 +5,16 @@ def improve_logs():
     url = "http://127.0.0.1:8000/improve-logs"  # Adjust host if running elsewhere
 
     # Example diff and context data
-    diff_content = """@@ -9 +9 @@ public class Main {
--            System.out.println("This is my new log ");
-+            System.out.println("Arguments recei: ");
+    diff_content = """
+diff --git a/MainApplication.java b/MainApplication.java
+index 9a01aa5..11801f2 100644
+--- a/MainApplication.java
++++ b/MainApplication.java
+@@ -9 +9 @@ public class Main {
+-            System.out.println("Arguments recei: ");
++            System.out.println("Arguments receie: ");
+@@ -14,0 +15 @@ public class Main {
++            System.out.println("No arguments receivedddddd.");
 """
 
     context_content = """public class Main {

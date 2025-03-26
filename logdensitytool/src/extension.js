@@ -150,7 +150,7 @@ function improveLogsCommand() {
                 }
                 
                 // Build Prompt
-                const builtPrompt = buildPrompt([selectedLog["line"], contextText], system_prompt, injection_variable)
+                const builtPrompt = buildPrompt([contextText, "", selectedLog["line"]], system_prompt, injection_variable)
                 if (builtPrompt != null) {
                     prompt = builtPrompt
                 }

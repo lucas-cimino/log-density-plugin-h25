@@ -7,16 +7,16 @@ Use these class variables to determine the available logging mechanism:
 {class_variables}
 
 Instructions:
-1. If a logging instance (like logger, LOG, LOGGER, log, etc.) exists in the class variables, use that EXACT variable name.
-2. Otherwise, default to using System.out.println().
-3. Choose the appropriate log level (info, debug, warn, error) based on the method context.
+1. If a logging instance (like logger, LOG, LOGGER, log, etc.) exists in the class variables, Replace it instead of <log instance>.
+2. Choose the appropriate log level (info, debug, warn, error) based on the method context, Replace it instead of <level>.
+3. Otherwise, default to using System.out.println().
 4. Include relevant method parameters and contextual information in the message.
-5. Use ONLY double quotes (") for strings in the log message - never use single quotes.
+5.Use ONLY double quotes (") for strings in the log message - never use single quotes.
 6. Use the + operator for concatenation.
 
 Return ONLY this JSON without any additional text:
 
 {{
-    "log_statement": "actualLoggerName.level(\"Descriptive message\" + relevantVariable);",
+    "log_statement": "<log instance>.<level>("Descriptive message" + relevantVariable);",
     "reason": "Brief explanation of log placement and content choice"
 }}

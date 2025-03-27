@@ -1,0 +1,29 @@
+@startuml ds - addMissingLogs
+title Sequence Diagram - Suggest ReviewComment after PR
+skinparam style strictuml
+
+actor User
+participant "Git" as GT
+participant "Workflow" as WF
+participant "JS query" as JQ
+participant "python image" as PI 
+
+User -> GT: Pushes commited code
+alt There is no Pull Request under the Branch
+    User -> GT: Create Pull request
+end
+GT -> WF: call the workflow
+GT -> WF: GitHubToken, PR_Number, Repo
+
+WF -> JQ: OllamaQuery(GitHubToken, PR_Number, Repo)
+
+JQ -> GT: "git diff --name-only origin/main - - *.java"
+GT -> JQ: fileList = executed
+loop For each file in fileList
+    JQ -> GT: git diff -U0 origin/main -- ${file}
+    GT -> JQ: diff = executed
+    JQ -> PI: data = {diff, context}
+    PI -> JQ: reason, suggested, line
+    JQ -> GT: ReviewComment[reason, suggested, line]
+end
+@enduml

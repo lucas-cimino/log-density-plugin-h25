@@ -4,7 +4,7 @@ skinparam style strictuml
 
 actor User
 participant "Git" as GT
-participant "Workflow" as WF
+participant "local runner" as LR
 participant "JS query" as JQ
 participant "python image" as PI 
 
@@ -12,10 +12,10 @@ User -> GT: Pushes commited code
 alt There is no Pull Request under the Branch
     User -> GT: Create Pull request
 end
-GT -> WF: call the workflow
-GT -> WF: GitHubToken, PR_Number, Repo
+GT -> LR: call the workflow
+GT -> LR: GitHubToken, PR_Number, Repo
 
-WF -> JQ: OllamaQuery(GitHubToken, PR_Number, Repo)
+LR -> JQ: OllamaQuery(GitHubToken, PR_Number, Repo)
 
 JQ -> GT: "git diff --name-only origin/main - - *.java"
 GT -> JQ: fileList = executed

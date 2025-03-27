@@ -1,0 +1,25 @@
+package "Backend - Services" {
+    package "Service AI Analysis" {
+        [analysis_router] --> [analysis_service]
+        [analysis_router] --> [ProjectAnalysis]
+        [analysis_router] --> [ProjectFile]
+        [analysis_service] --> [predict_file_densities]
+        [analysis_service] --> [analyze_project]
+        [analysis_service] --> [generate_log_advice]
+        [analysis_service] --> [improve_logs]
+        [ProjectAnalysis] --> [FileContent]
+    }
+
+    package "Service Model Creation" {
+        [model_router] --> [model_service]
+        [model_router] --> [JavaProject]
+        [model_service] --> [create_model]
+    }
+}
+
+[Extension] --> [Backend - Services] : API Calls
+[AnalyzeFileProvider] --> [analysis_router] : /analyzeProject
+[OpenTabsSidebarProvider] --> [analysis_router] : /predict
+[FactoryService] --> [model_router] : /create
+
+@enduml

@@ -1,5 +1,6 @@
 import requests
 
+BASE_URL = "http://ollama:11434"
 
 def pull_model(model):
     """
@@ -8,8 +9,8 @@ def pull_model(model):
     :param model: The model to check and pull.
     :return: True if the model was successfully pulled or is already available, else False.
     """
-    url = "http://ollama:11434/api/tags"  # Ollama API to list available models
-    pull_url = "http://ollama:11434/api/pull"  # Ollama API to pull a model
+    url = f"{BASE_URL}/api/tags"  # Ollama API to list available models
+    pull_url = f"{BASE_URL}/api/pull"  # Ollama API to pull a model
 
     try:
         # Check if the model is available
@@ -40,7 +41,7 @@ def generate(prompt, model="llama3.2:3b"):
     :param model: The model to use (default: "llama2").
     :return: The model's response as a string.
     """
-    url = "http://ollama:11434/api/generate"  # Default Ollama API endpoint
+    url = f"{BASE_URL}/api/generate"  # Default Ollama API endpoint
     data = {
         "model": model,
         "prompt": prompt,

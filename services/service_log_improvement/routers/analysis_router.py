@@ -21,9 +21,6 @@ def improve_logs(request: LogImprovementRequest):
     context = request.context
     return improve_logs_be(diff, context)
 
-@router.get("/test")
-def test_endpoint():
-    return {"message": "Router is working"}
 
 def get_surrounding_lines_from_file(file_content, line_number, context_lines=4):
     """
@@ -81,8 +78,9 @@ def get_modified_logs_from_diff(diff):
         elif line.startswith("+") and not line.startswith("+++"):
             if "System.out." in line or "System.err." in line or "LOG." in line:
                 if current_line_number is not None:
-                    modified_line = line.lstrip("+").strip()
-                    modified_logs.append((current_line_number + 1, modified_line.strip()))  # 1-based index
+                    modified_line = line.lstrip("+")
+                    leading_white_space = modified_line[: len(modified_line) - len(modified_line.lstrip())]
+                    modified_logs.append((current_line_number + 1, modified_line.strip(), leading_white_space))  # 1-based index
                     current_line_number += 1
 
     return modified_logs
@@ -102,7 +100,7 @@ def improve_logs_be(diff, context):
 
     # Generate improved logs using the template
     improved_logs = []
-    for line_num, log in modified_logs:
+    for line_num, log, leading_white_space in modified_logs:
 
         surrounding_lines = get_surrounding_lines_from_file(context, line_num)
 
@@ -116,7 +114,9 @@ def improve_logs_be(diff, context):
 
         output = json.loads(output)
         #"reason"
-        improved_logs.append({"line": line_num, "original": log, "suggested": output["log_statement"], "reason": output["reason"]})
+        improved_logs.append({"line": line_num, "original": log,
+                              "suggested": leading_white_space + output["log_statement"],
+                              "reason": output["reason"]})
 
 
     print(improved_logs)

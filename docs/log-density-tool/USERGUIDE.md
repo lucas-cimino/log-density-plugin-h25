@@ -7,7 +7,7 @@
     - [4.1 Créer un modèle d'apprentissage AI](#41-créer-un-modèle-dapprentissage-ai)
     - [4.2 Analyser un fichier JAVA pour obtenir la densité d’instructions de journalisation appropriée](#42-analyser-un-fichier-java-pour-obtenir-la-densité-dinstructions-de-journalisation-appropriée)
     - [4.3 Analyser plusieurs fichiers JAVA pour obtenir la densité d’instructions de journalisation appropriée](#43-analyser-plusieurs-fichiers-java-pour-obtenir-la-densité-dinstructions-de-journalisation-appropriée)
-    - [4.3 Ajouter des instructions de journalisation aux endroits où il en manque](#43-ajouter-des-instructions-de-journalisation-aux-endroits-où-il-en-manque)
+    - [4.4 Ajouter des instructions de journalisation aux endroits où il en manque](#44-ajouter-des-instructions-de-journalisation-aux-endroits-où-il-en-manque)
 
 # Guide d'utilisation de l'extension "Log Density Tool"
 
@@ -95,7 +95,7 @@ Bienvenue dans le guide d'utilisation de l'extension "Log Density Tool", conçue
 
 ![Analyse de fichiers](../resources/userGuide/image-20.png)
 
-### 4.3 Ajouter des instructions de journalisation aux endroits où il en manque
+### 4.4 Ajouter des instructions de journalisation aux endroits où il en manque
 
 - Ouvrir le dossier sur lequel on veut ajouter de la journalisation.
 ![Ouvrir dossier](../resources/userGuide/open_folder.png)

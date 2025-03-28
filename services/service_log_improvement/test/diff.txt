@@ -1,3 +1,0 @@
-@@ -9 +9 @@ public class Main {
--            System.out.println("This is my new log ");
-+            System.out.println("Arguments recei: ");

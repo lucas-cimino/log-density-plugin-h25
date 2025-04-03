@@ -43,7 +43,7 @@ Le script **`queryOllama.js`** va :
 
 ## **4. Utilisation**
 
-### 1 Set up le self-hoaster runner
+### 1. Set up le self-hoaster runner
 
 Si vous n'aviez pas de self-hoasted runner voici les étapes à suivre pour le set-up:
 
@@ -60,6 +60,6 @@ Afin de lancer et tester l'action GitHub vous devez:
 2. Prennez soint que les containers de **Log Density** roullent.
 3. Après avoir commit des modifications dans le code Java, push le code et faites un pull request.
 4. Après le pull request, l'action GitHub sera lancé et fera l'appel de l'API du serveur Ollama.
-5. Après un certain temps, une suggestion sera disponible à faire sur un bout de code.
+5. Après un certain temps, des suggestions seront disponibles à faire sur des bouts de code. Et ça sera à vous de faire les commits et de les push sur le pull request.
 
 ![Local Image](../resources/userGuide/generate_suggestion.png)

@@ -132,6 +132,8 @@ package logdensitytool {
                 +removeFileFromAnalyze(filePath)
                 +removeAllFiles()
                 +sendFilesForAnalysis()
+                +getBlocks()
+                +processAllBlocks(allBlocks)
             }
             AnalyzeFileProvider <-> JavaFileProvider
 

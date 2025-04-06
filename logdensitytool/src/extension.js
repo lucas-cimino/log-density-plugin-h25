@@ -111,16 +111,16 @@ function improveLogsCommand() {
     const logLines = selectedText.split('\n');
     const logLinesSelected = [];
 
-    
-    for (let line of logLines) {
+    logLines.forEach((line, i) => {
         if (javaLogRegex.test(line)) {
+            const fullLineText = i === 0 ? editor.document.lineAt(selection.active.line).text : line;
             logLinesSelected.push({
-                line: line.trim(),
-                lineNotTrim: line,
+                line: fullLineText.trim(),
+                lineNotTrim: fullLineText,
             });
         }
-    }
-
+    });
+    
     vscode.window.withProgress({
         location: vscode.ProgressLocation.Notification,
         title: "Improving Logs",

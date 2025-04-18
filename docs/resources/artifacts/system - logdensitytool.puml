@@ -15,11 +15,23 @@ package "Backend - Services" {
         [model_router] --> [JavaProject]: Analyzes
         [model_service] --> [create_model]: Creates
     }
+
+    package "Service Log Improvement" {
+        [SLIanalysis_router] --> [ollama_client]:generate prompt
+        [SLIanalysis_router] --> [LogImprovementRequest]:Takes as argument
+        [SLIanalysis_router] --> [SLIimprove_logs]:improve logs
+        [SLIanalysis_router] --> [get_surrounding_lines_from_file]:get surrounding lines from file
+        [SLIanalysis_router] --> [get_prompt_from_template]:get prompt from template
+        [SLIanalysis_router] --> [get_modified_logs_from_diff]:get modified logs from diff
+        [SLIanalysis_router] --> [improve_logs_be]:improve logs
+
+    }
 }
 
 [Extension] --> [Backend - Services] : API Calls
 [AnalyzeFileProvider] --> [analysis_router] : /analyzeProject
 [OpenTabsSidebarProvider] --> [analysis_router] : /predict
 [FactoryService] --> [model_router] : /create
+[QueryOllama] --> [SLIanalysis_router]: /post
 
 @enduml
